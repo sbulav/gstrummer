@@ -24,6 +24,10 @@ class AudioEngine:
         self._strum_volume = 0.5
         self._master_volume = 0.8
         
+        # Enable/disable controls for different audio types
+        self._click_enabled = True
+        self._strum_enabled = True
+        
         # Sample cache
         self._samples: Dict[str, np.ndarray] = {}
         
@@ -174,6 +178,9 @@ class AudioEngine:
             
     def play_click(self, accent: bool = False):
         """Play metronome click sound."""
+        if not self._click_enabled:
+            return
+            
         if accent:
             sample_name = 'click_accent'
             volume = self._click_volume * 1.2  # Boost accent volume
@@ -185,12 +192,14 @@ class AudioEngine:
         
     def play_click_high(self):
         """Play high click for downbeat."""
+        if not self._click_enabled:
+            return
         self._play_sample('click_high', self._click_volume * 1.1)
         
     def play_strum(self, direction: str, accent: float = 0.0):
         """Play strum sound based on direction and accent level."""
-        if direction == "-":
-            return  # No sound for rests
+        if not self._strum_enabled or direction == "-":
+            return  # No sound if disabled or for rests
             
         # Determine sample name - map single letters to full words
         direction_map = {'D': 'down', 'U': 'up'}
@@ -225,6 +234,22 @@ class AudioEngine:
             'strum': self._strum_volume,
             'master': self._master_volume
         }
+        
+    def set_click_enabled(self, enabled: bool):
+        """Enable or disable metronome click sounds."""
+        self._click_enabled = enabled
+        
+    def set_strum_enabled(self, enabled: bool):
+        """Enable or disable strum sounds."""
+        self._strum_enabled = enabled
+        
+    def is_click_enabled(self) -> bool:
+        """Check if metronome clicks are enabled."""
+        return self._click_enabled
+        
+    def is_strum_enabled(self) -> bool:
+        """Check if strum sounds are enabled."""
+        return self._strum_enabled
         
     def set_enabled(self, enabled: bool):
         """Enable or disable audio playback."""

@@ -110,6 +110,7 @@ class PracticeView(QWidget):
         
         # Audio control connections
         self.transport.volume_changed.connect(self.on_volume_changed)
+        self.transport.enabled_changed.connect(self.on_enabled_changed)
         
         # Metronome connections
         self.metronome.tick.connect(self.on_metronome_tick)
@@ -223,6 +224,13 @@ class PracticeView(QWidget):
             self.audio.set_volumes(click=value)
         elif volume_type == 'strum':
             self.audio.set_volumes(strum=value)
+            
+    def on_enabled_changed(self, audio_type: str, enabled: bool):
+        """Handle enable/disable changes for audio types."""
+        if audio_type == 'click':
+            self.audio.set_click_enabled(enabled)
+        elif audio_type == 'strum':
+            self.audio.set_strum_enabled(enabled)
         
     def on_metronome_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for GUI updates (Qt signal, thread-safe)."""

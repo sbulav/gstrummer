@@ -94,20 +94,34 @@ class Metronome:
 class AudioEngine:
     def __init__(self):
         self._enabled = True
+        self._click_enabled = True
+        self._strum_enabled = True
         
     def play_click(self, accent: bool = False):
-        if not self._enabled:
+        if not self._enabled or not self._click_enabled:
             return
         print("CLICK" + ("!" if accent else ""))
     
     def play_strum(self, direction: str, accent: float = 0.0):
-        if not self._enabled:
+        if not self._enabled or not self._strum_enabled or direction == "-":
             return
         accent_str = " (ACCENT)" if accent > 0.5 else ""
         print(f"STRUM {direction}{accent_str}")
     
     def set_enabled(self, enabled: bool):
         self._enabled = enabled
+        
+    def set_click_enabled(self, enabled: bool):
+        self._click_enabled = enabled
+        
+    def set_strum_enabled(self, enabled: bool):
+        self._strum_enabled = enabled
+        
+    def is_click_enabled(self) -> bool:
+        return self._click_enabled
+        
+    def is_strum_enabled(self) -> bool:
+        return self._strum_enabled
     
     def close(self):
         pass

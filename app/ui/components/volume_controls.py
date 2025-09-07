@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                               QSlider, QPushButton, QGroupBox)
+                               QSlider, QPushButton, QGroupBox, QCheckBox)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
@@ -9,6 +9,7 @@ class VolumeControls(QWidget):
     
     volume_changed = Signal(str, float)  # volume_type, value
     mute_toggled = Signal(str, bool)     # volume_type, muted
+    enabled_changed = Signal(str, bool)  # audio_type, enabled
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -86,6 +87,14 @@ class VolumeControls(QWidget):
         click_controls.addWidget(self.click_mute)
         click_layout.addLayout(click_controls)
         
+        # Enable/disable checkbox for metronome
+        self.click_enabled = QCheckBox("Включить метроном")
+        self.click_enabled.setChecked(True)
+        self.click_enabled.toggled.connect(
+            lambda checked: self.enabled_changed.emit('click', checked)
+        )
+        click_layout.addWidget(self.click_enabled)
+        
         controls_layout.addWidget(click_group)
         
         # Strum volume
@@ -117,6 +126,14 @@ class VolumeControls(QWidget):
         strum_controls.addWidget(self.strum_label)
         strum_controls.addWidget(self.strum_mute)
         strum_layout.addLayout(strum_controls)
+        
+        # Enable/disable checkbox for strum sounds
+        self.strum_enabled = QCheckBox("Включить звуки боя")
+        self.strum_enabled.setChecked(True)
+        self.strum_enabled.toggled.connect(
+            lambda checked: self.enabled_changed.emit('strum', checked)
+        )
+        strum_layout.addWidget(self.strum_enabled)
         
         controls_layout.addWidget(strum_group)
         

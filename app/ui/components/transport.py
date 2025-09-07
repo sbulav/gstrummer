@@ -15,6 +15,7 @@ class TransportControls(QWidget):
     bpm_changed = Signal(int)
     pattern_changed = Signal(str)
     volume_changed = Signal(str, float)  # Forward from volume controls
+    enabled_changed = Signal(str, bool)  # Forward from volume controls
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,6 +52,7 @@ class TransportControls(QWidget):
         
         # Connect volume controls
         self.volume_controls.volume_changed.connect(self.volume_changed.emit)
+        self.volume_controls.enabled_changed.connect(self.enabled_changed.emit)
         
         layout.addWidget(audio_group)
         
