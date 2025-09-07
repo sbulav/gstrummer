@@ -28,8 +28,8 @@ class TimelineWidget(QWidget):
         self.arrow_size = 30
         
         # Animation properties
-        self.highlight_scale = 1.0
-        self.flash_opacity = 0.0
+        self._highlight_scale = 1.0
+        self._flash_opacity = 0.0
         
         # Animation objects
         self.highlight_animation = QPropertyAnimation(self, b"highlight_scale")
@@ -85,19 +85,19 @@ class TimelineWidget(QWidget):
         self.update()
         
     def get_highlight_scale(self):
-        return self.highlight_scale
+        return self._highlight_scale
         
     def set_highlight_scale(self, value):
-        self.highlight_scale = value
+        self._highlight_scale = value
         self.update()
         
     highlight_scale = property(get_highlight_scale, set_highlight_scale)
     
     def get_flash_opacity(self):
-        return self.flash_opacity
+        return self._flash_opacity
         
     def set_flash_opacity(self, value):
-        self.flash_opacity = value
+        self._flash_opacity = value
         self.update()
         
     flash_opacity = property(get_flash_opacity, set_flash_opacity)

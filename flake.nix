@@ -12,7 +12,7 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
 
-      python = pkgs.python311;
+      python = pkgs.python312;
 
       pythonEnv = python.withPackages (ps:
         with ps; [
