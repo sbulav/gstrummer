@@ -18,6 +18,7 @@ class PracticeView(QWidget):
         self.audio = audio_engine
         self.metronome = metronome
         self.current_pattern = None
+        self.patterns = {}
         
         self.init_ui()
         self.setup_connections()
@@ -141,6 +142,7 @@ class PracticeView(QWidget):
             
     def set_patterns(self, patterns):
         """Set available patterns for selection."""
+        self.patterns = patterns
         self.transport.set_patterns(patterns)
         
     def update_pattern_info(self):
@@ -190,8 +192,28 @@ class PracticeView(QWidget):
         
     def on_pattern_changed(self, pattern_id: str):
         """Handle pattern change from transport controls."""
-        # This would be handled by parent window typically
-        pass
+        if pattern_id and pattern_id in self.patterns:
+            # Get the new pattern
+            new_pattern = self.patterns[pattern_id]
+            
+            # Update current pattern
+            self.current_pattern = new_pattern
+            
+            # Update UI components with new pattern
+            self.pattern_title.setText(new_pattern.name)
+            self.timeline.set_pattern(new_pattern)
+            self.steps_preview.set_pattern(new_pattern)
+            
+            # Update pattern info display
+            self.update_pattern_info()
+            
+            # Configure metronome for the new pattern
+            beats_per_bar = new_pattern.time_sig[0]
+            self.metronome.steps_per_beat = new_pattern.steps_per_bar // beats_per_bar
+            
+            # Reset timeline position when pattern changes
+            self.timeline.set_current_step(0)
+            self.steps_preview.set_current_step(0)
         
     def on_volume_changed(self, volume_type: str, value: float):
         """Handle volume changes from transport controls."""
