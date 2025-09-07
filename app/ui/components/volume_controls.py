@@ -42,7 +42,8 @@ class VolumeControls(QWidget):
         )
         
         self.master_mute = QPushButton("🔊")
-        self.master_mute.setMaximumWidth(40)
+        self.master_mute.setMinimumWidth(50)
+        self.master_mute.setMaximumWidth(80)  # Increased for display scaling
         self.master_mute.setCheckable(True)
         self.master_mute.toggled.connect(
             lambda checked: self._toggle_mute('master', checked)
@@ -76,7 +77,8 @@ class VolumeControls(QWidget):
         )
         
         self.click_mute = QPushButton("🎵")
-        self.click_mute.setMaximumWidth(40)
+        self.click_mute.setMinimumWidth(50)
+        self.click_mute.setMaximumWidth(80)  # Increased for display scaling
         self.click_mute.setCheckable(True)
         self.click_mute.toggled.connect(
             lambda checked: self._toggle_mute('click', checked)
@@ -116,7 +118,8 @@ class VolumeControls(QWidget):
         )
         
         self.strum_mute = QPushButton("🎸")
-        self.strum_mute.setMaximumWidth(40)
+        self.strum_mute.setMinimumWidth(50)
+        self.strum_mute.setMaximumWidth(80)  # Increased for display scaling
         self.strum_mute.setCheckable(True)
         self.strum_mute.toggled.connect(
             lambda checked: self._toggle_mute('strum', checked)

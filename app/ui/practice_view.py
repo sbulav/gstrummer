@@ -108,7 +108,7 @@ class PracticeView(QWidget):
         self.transport.bpm_changed.connect(self.on_bpm_changed)
         self.transport.pattern_changed.connect(self.on_pattern_changed)
         
-        # Audio control connections
+        # Audio control connections (now through audio status bar)
         self.transport.volume_changed.connect(self.on_volume_changed)
         self.transport.enabled_changed.connect(self.on_enabled_changed)
         

@@ -1,9 +1,8 @@
 from PySide6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton, 
-                               QSlider, QLabel, QComboBox, QSpinBox, QGroupBox)
+                                QSlider, QLabel, QComboBox, QSpinBox, QGroupBox)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
 from typing import Optional, Dict
-from .volume_controls import VolumeControls
 
 
 class TransportControls(QWidget):
@@ -43,16 +42,18 @@ class TransportControls(QWidget):
         pattern_group = self.create_pattern_controls()
         layout.addWidget(pattern_group)
         
-        # Audio controls section
-        audio_group = QGroupBox("🔊 Аудио")
+        # Audio status bar (compact icons + settings button)
+        audio_group = QGroupBox("🔊 Audio")
         audio_layout = QVBoxLayout(audio_group)
         
-        self.volume_controls = VolumeControls()
-        audio_layout.addWidget(self.volume_controls)
+        from .audio_status_bar import AudioStatusBar
+        self.audio_status_bar = AudioStatusBar()
+        audio_layout.addWidget(self.audio_status_bar)
         
-        # Connect volume controls
-        self.volume_controls.volume_changed.connect(self.volume_changed.emit)
-        self.volume_controls.enabled_changed.connect(self.enabled_changed.emit)
+        # Connect audio status bar signals
+        self.audio_status_bar.volume_changed.connect(self.volume_changed.emit)
+        self.audio_status_bar.enabled_changed.connect(self.enabled_changed.emit)
+        # Note: mute_toggled is handled internally by the status bar
         
         layout.addWidget(audio_group)
         
@@ -85,8 +86,8 @@ class TransportControls(QWidget):
         # BPM display
         bpm_layout = QHBoxLayout()
         self.bpm_label = QLabel(f"{self.current_bpm} BPM")
-        self.bpm_label.setFont(QFont("Arial", 12, QFont.Bold))
-        self.bpm_label.setAlignment(Qt.AlignCenter)
+        self.bpm_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        self.bpm_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bpm_layout.addWidget(self.bpm_label)
         layout.addLayout(bpm_layout)
         
