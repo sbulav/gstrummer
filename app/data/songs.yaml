@@ -37,3 +37,51 @@
   pattern_id: "sixteenth_drive"
   progression: ["Am", "Dm", "E", "Am"]
   notes: "Энергичный бой с пропусками"
+
+- title: "Пачка сигарет"
+  artist: "Кино"
+  bpm: 92
+  time_sig: [4,4]
+  pattern_id: "shestorka"
+  progression: ["Am", "G", "Dm", "Am"]
+  notes: "Исполняется классической шестеркой (6-ка)."
+
+- title: "Фантом"
+  artist: "Чиж & Co"
+  bpm: 94
+  time_sig: [4,4]
+  pattern_id: "shestorka"
+  progression: ["Am", "G", "C", "F"]
+  notes: "Классическая шестерка, размеренный темп."
+
+- title: "Поворот"
+  artist: "Машина времени"
+  bpm: 105
+  time_sig: [4,4]
+  pattern_id: "shestorka"
+  progression: ["Am", "D", "G", "C", "Am", "E"]
+  notes: "Шестерка в стиле 70-х."
+
+- title: "Выхода нет"
+  artist: "Сплин"
+  bpm: 80
+  time_sig: [4,4]
+  pattern_id: "vosmerka"
+  progression: ["Em", "G", "D", "C"]
+  notes: "Ритм восьмеркой; стандартный бой."
+
+- title: "Мой рок-н-ролл"
+  artist: "Би-2"
+  bpm: 76
+  time_sig: [4,4]
+  pattern_id: "vosmerka"
+  progression: ["Am", "C", "G", "D"]
+  notes: "Используется классическая восьмерка."
+
+- title: "Гудбай, Америка"
+  artist: "Наутилус Помпилиус"
+  bpm: 88
+  time_sig: [4,4]
+  pattern_id: "vosmerka"
+  progression: ["Am", "F", "G", "C"]
+  notes: "Восьмерка, балладный темп."
