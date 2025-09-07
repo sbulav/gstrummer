@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
 from typing import Optional, Dict
+from .volume_controls import VolumeControls
 
 
 class TransportControls(QWidget):
@@ -13,6 +14,7 @@ class TransportControls(QWidget):
     stop_clicked = Signal()
     bpm_changed = Signal(int)
     pattern_changed = Signal(str)
+    volume_changed = Signal(str, float)  # Forward from volume controls
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -39,6 +41,18 @@ class TransportControls(QWidget):
         # Pattern selection
         pattern_group = self.create_pattern_controls()
         layout.addWidget(pattern_group)
+        
+        # Audio controls section
+        audio_group = QGroupBox("🔊 Аудио")
+        audio_layout = QVBoxLayout(audio_group)
+        
+        self.volume_controls = VolumeControls()
+        audio_layout.addWidget(self.volume_controls)
+        
+        # Connect volume controls
+        self.volume_controls.volume_changed.connect(self.volume_changed.emit)
+        
+        layout.addWidget(audio_group)
         
     def create_playback_controls(self):
         """Create play/pause/stop controls."""

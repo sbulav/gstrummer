@@ -5,6 +5,7 @@ from PySide6.QtGui import QFont, QKeySequence, QShortcut
 
 from .components.timeline import TimelineWidget
 from .components.transport import TransportControls
+from .components.steps_preview import StepsPreviewWidget
 
 
 class PracticeView(QWidget):
@@ -47,12 +48,26 @@ class PracticeView(QWidget):
         # Main content area with splitter
         splitter = QSplitter(Qt.Vertical)
         
-        # Timeline visualization (main focus)
+        # Timeline visualization (main focus) - now with horizontal split
         timeline_group = QGroupBox("Визуализация ритма")
-        timeline_layout = QVBoxLayout(timeline_group)
+        timeline_layout = QHBoxLayout(timeline_group)
         
+        # Horizontal splitter for timeline and preview
+        timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
+        
+        # Timeline widget (left side)
         self.timeline = TimelineWidget()
-        timeline_layout.addWidget(self.timeline)
+        timeline_splitter.addWidget(self.timeline)
+        
+        # Steps preview (right side)
+        self.steps_preview = StepsPreviewWidget()
+        timeline_splitter.addWidget(self.steps_preview)
+        
+        # Set proportions: timeline gets 70%, preview gets 30%
+        timeline_splitter.setStretchFactor(0, 7)
+        timeline_splitter.setStretchFactor(1, 3)
+        
+        timeline_layout.addWidget(timeline_splitter)
         
         splitter.addWidget(timeline_group)
         
@@ -92,6 +107,9 @@ class PracticeView(QWidget):
         self.transport.bpm_changed.connect(self.on_bpm_changed)
         self.transport.pattern_changed.connect(self.on_pattern_changed)
         
+        # Audio control connections
+        self.transport.volume_changed.connect(self.on_volume_changed)
+        
         # Metronome connections
         self.metronome.tick.connect(self.on_metronome_tick)
         self.metronome.started.connect(self.on_metronome_started)
@@ -107,6 +125,7 @@ class PracticeView(QWidget):
             # Update UI components
             self.pattern_title.setText(pattern.name)
             self.timeline.set_pattern(pattern)
+            self.steps_preview.set_pattern(pattern)
             
             # Update transport controls
             self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
@@ -163,6 +182,7 @@ class PracticeView(QWidget):
         """Stop practice session."""
         self.metronome.stop()
         self.timeline.set_current_step(0)
+        self.steps_preview.set_current_step(0)
         
     def on_bpm_changed(self, bpm: int):
         """Handle BPM change from transport controls."""
@@ -173,6 +193,15 @@ class PracticeView(QWidget):
         # This would be handled by parent window typically
         pass
         
+    def on_volume_changed(self, volume_type: str, value: float):
+        """Handle volume changes from transport controls."""
+        if volume_type == 'master':
+            self.audio.set_volumes(master=value)
+        elif volume_type == 'click':
+            self.audio.set_volumes(click=value)
+        elif volume_type == 'strum':
+            self.audio.set_volumes(strum=value)
+        
     def on_metronome_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for GUI updates (Qt signal, thread-safe)."""
         if not self.current_pattern:
@@ -180,6 +209,7 @@ class PracticeView(QWidget):
             
         # Update timeline visualization
         self.timeline.set_current_step(step_index)
+        self.steps_preview.set_current_step(step_index)
         
     def on_practice_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for audio feedback (callback)."""
@@ -197,13 +227,17 @@ class PracticeView(QWidget):
             if step.dir != "-":
                 self.audio.play_strum(step.dir, step.accent)
             
-            # Play metronome click
+            # Play metronome click with beat awareness
+            beats_per_bar = self.current_pattern.time_sig[0]
+            steps_per_beat = bar_length // beats_per_bar
+            
             if bar_step == 0:
-                # Strong beat (downbeat)
+                # Strong beat (downbeat) - use high click
+                self.audio.play_click_high()
+            elif bar_step % steps_per_beat == 0:
+                # Other beats - use accented click
                 self.audio.play_click(accent=True)
-            elif bar_step % (bar_length // self.current_pattern.time_sig[0]) == 0:
-                # Other beats
-                self.audio.play_click(accent=False)
+            # No click on off-beats for cleaner sound
                 
     def on_metronome_started(self):
         """Handle metronome start."""
