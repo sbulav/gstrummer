@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                                QLabel, QGroupBox, QTextEdit, QSplitter)
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QKeySequence, QShortcut
 
 from .components.timeline import TimelineWidget
 from .components.transport import TransportControls
@@ -20,6 +20,7 @@ class PracticeView(QWidget):
         
         self.init_ui()
         self.setup_connections()
+        self.setup_shortcuts()
         
     def init_ui(self):
         """Initialize the practice view UI."""
@@ -216,6 +217,27 @@ class PracticeView(QWidget):
         """Handle step hit from timeline widget."""
         # Could be used for user interaction feedback
         pass
+        
+    def setup_shortcuts(self):
+        """Setup keyboard shortcuts for better UX."""
+        # Play/Pause - Space bar
+        self.play_shortcut = QShortcut(QKeySequence(Qt.Key_Space), self)
+        self.play_shortcut.activated.connect(self.transport.on_play_pause_clicked)
+        
+        # Stop - Escape
+        self.stop_shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        self.stop_shortcut.activated.connect(self.transport.on_stop_clicked)
+        
+        # BPM adjustment
+        self.bpm_up_shortcut = QShortcut(QKeySequence(Qt.Key_Plus), self)
+        self.bpm_up_shortcut.activated.connect(lambda: self.transport.adjust_bpm(5))
+        
+        self.bpm_down_shortcut = QShortcut(QKeySequence(Qt.Key_Minus), self)
+        self.bpm_down_shortcut.activated.connect(lambda: self.transport.adjust_bpm(-5))
+        
+        # Back to menu - Alt+Left
+        self.back_shortcut = QShortcut(QKeySequence(Qt.ALT | Qt.Key_Left), self)
+        self.back_shortcut.activated.connect(self.back_requested.emit)
         
     def cleanup(self):
         """Cleanup when view is closed."""

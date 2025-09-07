@@ -1,7 +1,7 @@
 {
   description = "GStrummer - Guitar strumming trainer (PySide6, sounddevice, librosa)";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = {
