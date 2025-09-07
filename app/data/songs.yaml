@@ -1,0 +1,39 @@
+- title: "Группа крови"
+  artist: "Кино"
+  bpm: 92
+  time_sig: [4,4]
+  pattern_id: "rock_8"
+  progression: ["Am", "F", "G", "C"]
+  notes: "Играть плотными восьмушками, акценты 2/4"
+
+- title: "Кукушка"
+  artist: "Кино"
+  bpm: 78
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["Am", "G", "Em", "Am"]
+  notes: "Балладный вариант; возможны вариации акцентов"
+
+- title: "Что такое осень"
+  artist: "ДДТ"
+  bpm: 80
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["Am", "F", "G", "C"]
+  notes: "Мягкие апстримы, не торопиться"
+
+- title: "Оранжевое настроение"
+  artist: "Чайф"
+  bpm: 95
+  time_sig: [4,4]
+  pattern_id: "rock_8"
+  progression: ["D", "A", "G", "D"]
+  notes: "Ритмичный рисунок с акцентами"
+
+- title: "Владимирский централ"
+  artist: "Михаил Круг"
+  bpm: 85
+  time_sig: [4,4]
+  pattern_id: "sixteenth_drive"
+  progression: ["Am", "Dm", "E", "Am"]
+  notes: "Энергичный бой с пропусками"

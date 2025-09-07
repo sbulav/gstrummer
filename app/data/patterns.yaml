@@ -1,0 +1,77 @@
+- id: rock_8
+  name: "Рок-восьмушки (акц. 2 и 4)"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 92
+  bpm_min: 60
+  bpm_max: 140
+  notes: "Чередование D/U, акценты на 2 и 4"
+  steps:
+    - {t: 0.0, dir: D, accent: 0.7}
+    - {t: 0.125, dir: U}
+    - {t: 0.25, dir: D, accent: 1.0}
+    - {t: 0.375, dir: U}
+    - {t: 0.5, dir: D, accent: 0.7}
+    - {t: 0.625, dir: U}
+    - {t: 0.75, dir: D, accent: 1.0}
+    - {t: 0.875, dir: U}
+
+- id: ddu_udu
+  name: "DDU UDU (баллада)"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 84
+  bpm_min: 56
+  bpm_max: 120
+  notes: "Популярный балладный рисунок"
+  steps:
+    - {t: 0.0, dir: D, accent: 0.8}
+    - {t: 0.125, dir: -}
+    - {t: 0.25, dir: D}
+    - {t: 0.375, dir: U}
+    - {t: 0.5, dir: -}
+    - {t: 0.625, dir: U}
+    - {t: 0.75, dir: D}
+    - {t: 0.875, dir: U}
+
+- id: sixteenth_drive
+  name: "Шестнадцатки с пропусками"
+  time_sig: [4,4]
+  steps_per_bar: 16
+  bpm_default: 100
+  bpm_min: 70
+  bpm_max: 130
+  notes: "Энергичный рисунок с пропусками"
+  steps:
+    - {t: 0.0, dir: D, accent: 0.8}
+    - {t: 0.0625, dir: -}
+    - {t: 0.125, dir: U}
+    - {t: 0.1875, dir: -}
+    - {t: 0.25, dir: D, accent: 1.0}
+    - {t: 0.3125, dir: U}
+    - {t: 0.375, dir: -}
+    - {t: 0.4375, dir: U}
+    - {t: 0.5, dir: D, accent: 0.8}
+    - {t: 0.5625, dir: -}
+    - {t: 0.625, dir: U}
+    - {t: 0.6875, dir: -}
+    - {t: 0.75, dir: D, accent: 1.0}
+    - {t: 0.8125, dir: U}
+    - {t: 0.875, dir: -}
+    - {t: 0.9375, dir: U}
+
+- id: waltz_3_4
+  name: "Вальс 3/4"
+  time_sig: [3,4]
+  steps_per_bar: 6
+  bpm_default: 90
+  bpm_min: 60
+  bpm_max: 120
+  notes: "Балладный вальсовый рисунок"
+  steps:
+    - {t: 0.0, dir: D, accent: 1.0}
+    - {t: 0.1667, dir: -}
+    - {t: 0.3333, dir: U}
+    - {t: 0.5, dir: -}
+    - {t: 0.6667, dir: U}
+    - {t: 0.8333, dir: -}
