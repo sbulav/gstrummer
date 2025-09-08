@@ -1,13 +1,18 @@
+import logging
 import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import logging
 import numpy as np
-import sounddevice as sd
 
 logger = logging.getLogger(__name__)
+
+try:
+    import sounddevice as sd
+except Exception as exc:  # pragma: no cover - optional dependency
+    sd = None  # type: ignore[assignment]
+    logger.warning("sounddevice not available: %s", exc)
 
 
 class AudioEngine:
@@ -33,7 +38,7 @@ class AudioEngine:
         self._samples: Dict[str, Tuple[np.ndarray, int]] = {}
 
         # Streaming output
-        self._stream: Optional[sd.OutputStream] = None
+        self._stream: Optional[Any] = None
         self._active_samples: List["QueuedSample"] = []
 
         # Audio device info
@@ -50,6 +55,10 @@ class AudioEngine:
 
     def _initialize_audio(self) -> None:
         """Initialize sounddevice with a persistent output stream."""
+        if sd is None:
+            logger.warning("sounddevice module not available, audio disabled")
+            self._audio_available = False
+            return
         try:
             self._device_info = sd.query_devices(kind="output")
             sd.check_output_settings(
@@ -174,7 +183,9 @@ class AudioEngine:
 
         return sample.astype(self._dtype)
 
-    def _audio_callback(self, outdata: np.ndarray, frames: int, time, status) -> None:  # type: ignore[override]
+    def _audio_callback(
+        self, outdata: np.ndarray, frames: int, callback_time: Any, status: Any
+    ) -> None:  # type: ignore[override]
         """Mix active samples into the output buffer."""
         if status:
             logger.warning("Audio callback status: %s", status)
