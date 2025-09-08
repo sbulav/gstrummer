@@ -9,8 +9,6 @@ from PySide6.QtWidgets import (
     QSplitter,
     QCheckBox,
     QComboBox,
-    QFrame,
-    QScrollArea,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence, QShortcut
@@ -70,7 +68,7 @@ class SongView(QWidget):
         # Section selector
         section_layout = QHBoxLayout()
         section_layout.addWidget(QLabel("Текущая секция:"))
-        
+
         self.section_combo = QComboBox()
         self.section_combo.currentTextChanged.connect(self.on_section_changed)
         section_layout.addWidget(self.section_combo)
@@ -208,7 +206,7 @@ class SongView(QWidget):
         if song:
             # Update UI components
             self.song_title.setText(f"{song.artist} - {song.title}")
-            
+
             # Update all chords display
             if song.all_chords:
                 chords_text = "Аккорды в песне: " + " | ".join(song.all_chords)
@@ -232,9 +230,9 @@ class SongView(QWidget):
             # Add sections from structure
             section_names = self.current_song.get_section_names()
             for section_name in section_names:
-                display_name = section_name.replace('_', ' ').title()
+                display_name = section_name.replace("_", " ").title()
                 self.section_combo.addItem(display_name, section_name)
-            
+
             # Enable navigation buttons
             self.prev_section_btn.setEnabled(True)
             self.next_section_btn.setEnabled(True)
@@ -264,19 +262,21 @@ class SongView(QWidget):
 
         section_name = section_names[self.current_section_index]
         section = self.current_song.get_section(section_name)
-        
+
         if not section:
             return
 
         self.current_section = section
 
         # Update section label
-        display_name = section_name.replace('_', ' ').title()
+        display_name = section_name.replace("_", " ").title()
         self.current_section_label.setText(f"Секция: {display_name}")
 
         # Update progress
         total_sections = len(section_names)
-        self.section_progress.setText(f"{self.current_section_index + 1} / {total_sections}")
+        self.section_progress.setText(
+            f"{self.current_section_index + 1} / {total_sections}"
+        )
 
         # Load pattern for this section
         pattern_id = section.pattern
@@ -288,6 +288,7 @@ class SongView(QWidget):
         bpm = section.bpm_override or self.current_song.bpm
         self.transport.set_bpm(bpm)
         self.metronome.set_bpm(bpm)
+        self.timeline.set_bpm(bpm)
 
     def load_practice_mode(self):
         """Load simple practice mode for songs without structure."""
@@ -302,8 +303,9 @@ class SongView(QWidget):
         if pattern_id in self.patterns:
             pattern = self.patterns[pattern_id]
             self.timeline.set_pattern(pattern)
+            self.timeline.set_bpm(self.current_song.bpm)
             self.steps_preview.set_pattern(pattern)
-            
+
             # Update transport controls
             self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
             self.transport.set_bpm(self.current_song.bpm)
@@ -318,11 +320,13 @@ class SongView(QWidget):
         # Create a virtual pattern with section-specific chord progression
         # For now, just use the base pattern
         self.timeline.set_pattern(pattern)
+        bpm = section.bpm_override or self.current_song.bpm
+        self.timeline.set_bpm(bpm)
         self.steps_preview.set_pattern(pattern)
 
         # Update transport controls
         self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
-        
+
         # Configure metronome
         beats_per_bar = pattern.time_sig[0]
         self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
@@ -352,7 +356,7 @@ class SongView(QWidget):
 
         if song.has_extended_structure():
             sections = song.get_section_names()
-            sections_text = ", ".join([s.replace('_', ' ').title() for s in sections])
+            sections_text = ", ".join([s.replace("_", " ").title() for s in sections])
             info_text += f"<br><br><b>Секции:</b> {sections_text}"
 
         self.song_info.setHtml(info_text)
@@ -376,8 +380,6 @@ class SongView(QWidget):
         """Navigate to previous section."""
         if not self.current_song or not self.current_song.has_extended_structure():
             return
-
-        section_names = self.current_song.get_section_names()
         if self.current_section_index > 0:
             self.current_section_index -= 1
             self.section_combo.setCurrentIndex(self.current_section_index)
@@ -416,6 +418,7 @@ class SongView(QWidget):
     def on_bpm_changed(self, bpm: int):
         """Handle BPM change from transport controls."""
         self.metronome.set_bpm(bpm)
+        self.timeline.set_bpm(bpm)
 
     def on_volume_changed(self, volume_type: str, value: float):
         """Handle volume changes from transport controls."""
@@ -446,9 +449,12 @@ class SongView(QWidget):
             if pattern:
                 steps_per_bar = pattern.steps_per_bar
                 completed_bars = step_index // steps_per_bar
-                
+
                 # Check if we've completed the required bars for this section
-                if completed_bars >= self.current_section.bars * self.current_section.repeat:
+                if (
+                    completed_bars
+                    >= self.current_section.bars * self.current_section.repeat
+                ):
                     # Auto-advance to next section
                     self.next_section()
 
