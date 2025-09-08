@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QKeySequence, QShortcut
+from PySide6.QtGui import QFont, QKeySequence, QShortcut, QPainter, QPen, QBrush, QColor
 from time import monotonic
 
 from .components.timeline import TimelineWidget
@@ -30,6 +30,9 @@ class PracticeView(QWidget):
         self.metronome = metronome
         self.current_pattern = None
         self.patterns = {}
+        self.songs = []  # Will be populated with songs data
+        self.current_progression = []
+        self.current_chord_index = 0
 
         self.evaluator = Evaluator()
 
@@ -102,16 +105,59 @@ class PracticeView(QWidget):
         self.transport = TransportControls()
         controls_layout.addWidget(self.transport)
 
-        # Pattern information
-        info_group = QGroupBox("Информация о ритме")
-        info_layout = QVBoxLayout(info_group)
+        # Chord progression display - Split into two widgets
+        progression_group = QGroupBox("Прогрессия аккордов")
+        progression_main_layout = QHBoxLayout(progression_group)
+        
+        # Left widget - Button container
+        button_container = QWidget()
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(5, 10, 5, 10)
+        
+        # Next progression button
+        self.next_progression_button = QPushButton("Следующая\nпрогрессия")
+        self.next_progression_button.setMaximumWidth(100)
+        self.next_progression_button.setMinimumHeight(60)
+        self.next_progression_button.setStyleSheet("""
+            QPushButton {
+                font-size: 10px;
+                padding: 5px;
+                background-color: #e0e0e0;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #d0d0d0;
+            }
+        """)
+        button_layout.addWidget(self.next_progression_button, 0, Qt.AlignmentFlag.AlignCenter)
+        button_layout.addStretch()
+        
+        # Right widget - Chord display container
+        chord_container = QWidget()
+        chord_layout = QVBoxLayout(chord_container)
+        chord_layout.setContentsMargins(10, 5, 10, 5)
+        
+        # Song info label
+        self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
+        self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
+        chord_layout.addWidget(self.song_info_label)
+        
+        # Custom widget for chord progression display
+        self.chord_display_widget = QWidget()
+        self.chord_display_widget.setMinimumHeight(120)
+        chord_layout.addWidget(self.chord_display_widget)
+        
+        # Add both containers to main layout
+        progression_main_layout.addWidget(button_container)
+        progression_main_layout.addWidget(chord_container)
+        
+        # Set stretch factors: 1 for button, 3 for chords (25%/75% split)
+        progression_main_layout.setStretchFactor(button_container, 1)
+        progression_main_layout.setStretchFactor(chord_container, 3)
 
-        self.pattern_info = QTextEdit()
-        self.pattern_info.setMaximumHeight(100)
-        self.pattern_info.setReadOnly(True)
-        info_layout.addWidget(self.pattern_info)
-
-        controls_layout.addWidget(info_group)
+        controls_layout.addWidget(progression_group)
 
         splitter.addWidget(controls_widget)
 
@@ -120,6 +166,15 @@ class PracticeView(QWidget):
         splitter.setStretchFactor(1, 1)  # Controls get 1/4 of space
 
         layout.addWidget(splitter)
+        
+        # Override paint event for chord display widget
+        self.chord_display_widget.paintEvent = self.chord_display_paint_event
+
+    def chord_display_paint_event(self, event):
+        """Custom paint event for chord progression display."""
+        painter = QPainter(self.chord_display_widget)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.paint_chord_progression(painter)
 
     def setup_connections(self):
         """Setup signal connections between components."""
@@ -133,6 +188,9 @@ class PracticeView(QWidget):
         # Audio control connections (now through audio status bar)
         self.transport.volume_changed.connect(self.on_volume_changed)
         self.transport.enabled_changed.connect(self.on_enabled_changed)
+        
+        # Chord progression connections
+        self.next_progression_button.clicked.connect(self.update_chord_progression)
 
         # Metronome connections
         self.metronome.tick.connect(self.on_metronome_tick)
@@ -157,8 +215,8 @@ class PracticeView(QWidget):
             self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
             self.transport.set_bpm(pattern.bpm_default)
 
-            # Update pattern info
-            self.update_pattern_info()
+            # Update chord progression
+            self.update_chord_progression()
 
             # Configure metronome for this pattern
             beats_per_bar = pattern.time_sig[0]
@@ -169,28 +227,97 @@ class PracticeView(QWidget):
         """Set available patterns for selection."""
         self.patterns = patterns
         self.transport.set_patterns(patterns)
+        
+        # Load songs for chord progression suggestions
+        try:
+            from app.core.patterns import load_songs
+            self.songs = load_songs("app/data/songs.yaml")
+        except Exception as e:
+            print(f"Error loading songs for chord progressions: {e}")
+            self.songs = []
 
-    def update_pattern_info(self):
-        """Update the pattern information display."""
+    def update_chord_progression(self):
+        """Update chord progression display based on current pattern."""
         if not self.current_pattern:
-            self.pattern_info.setText("Ритм не выбран")
+            self.song_info_label.setText("Выберите ритм для отображения прогрессии")
+            self.current_progression = []
+            self.current_chord_index = 0
+            self.chord_display_widget.update()
             return
 
-        pattern = self.current_pattern
-        time_sig = f"{pattern.time_sig[0]}/{pattern.time_sig[1]}"
-        bpm_range = f"{pattern.bpm_min}-{pattern.bpm_max} BPM"
+        # Find songs that use this pattern
+        matching_songs = [song for song in self.songs if song.pattern_id == self.current_pattern.id]
+        
+        if matching_songs:
+            # Randomly select a song
+            import random
+            selected_song = random.choice(matching_songs)
+            
+            # Use the progression from the song
+            self.current_progression = selected_song.progression
+            self.current_chord_index = 0
+            
+            # Update song info
+            self.song_info_label.setText(f"{selected_song.title} - {selected_song.artist}")
+        else:
+            # No songs found for this pattern
+            self.current_progression = []
+            self.song_info_label.setText("Нет песен для этого ритма")
+        
+        self.chord_display_widget.update()
 
-        info_text = f"""
-<b>Ритм:</b> {pattern.name}<br>
-<b>Размер:</b> {time_sig}<br>
-<b>Шагов в такте:</b> {pattern.steps_per_bar}<br>
-<b>Диапазон темпа:</b> {bpm_range}<br>
-<b>Рекомендуемый темп:</b> {pattern.bpm_default} BPM<br><br>
-<b>Описание:</b><br>
-{pattern.notes}
-        """.strip()
+    def advance_chord(self):
+        """Advance to next chord in progression."""
+        if self.current_progression:
+            self.current_chord_index = (self.current_chord_index + 1) % len(self.current_progression)
+            self.chord_display_widget.update()
 
-        self.pattern_info.setHtml(info_text)
+    def paint_chord_progression(self, painter):
+        """Paint chord progression on the display widget."""
+        if not self.current_progression:
+            return
+            
+        # Visual properties
+        chord_width = 80
+        chord_height = 60
+        chord_spacing = 10
+        highlight_color = QColor(100, 200, 100, 200)  # Green highlight
+        normal_color = QColor(200, 200, 200, 150)    # Gray normal
+        text_color = QColor(50, 50, 50)
+        border_color = QColor(100, 100, 100)
+        
+        # Calculate positions
+        total_width = len(self.current_progression) * (chord_width + chord_spacing) - chord_spacing
+        start_x = (self.chord_display_widget.width() - total_width) // 2
+        y = 20
+        
+        # Draw chord boxes
+        for i, chord in enumerate(self.current_progression):
+            x = start_x + i * (chord_width + chord_spacing)
+            
+            # Choose color based on current position
+            if i == self.current_chord_index:
+                painter.setBrush(QBrush(highlight_color))
+            else:
+                painter.setBrush(QBrush(normal_color))
+                
+            # Draw chord box
+            painter.setPen(QPen(border_color, 2))
+            painter.drawRoundedRect(x, y, chord_width, chord_height, 8, 8)
+            
+            # Draw chord name
+            painter.setPen(QPen(text_color))
+            painter.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+            painter.drawText(x, y, chord_width, chord_height, 
+                           Qt.AlignmentFlag.AlignCenter, chord)
+        
+        # Draw progression indicator (1, 2, 3, 4...)
+        painter.setFont(QFont("Arial", 10))
+        painter.setPen(QPen(text_color))
+        for i in range(len(self.current_progression)):
+            x = start_x + i * (chord_width + chord_spacing) + chord_width // 2
+            painter.drawText(x - 10, y + chord_height + 15, 20, 15, 
+                           Qt.AlignmentFlag.AlignCenter, str(i + 1))
 
     def start_practice(self):
         """Start practice session."""
@@ -233,8 +360,8 @@ class PracticeView(QWidget):
             self.timeline.set_bpm(new_pattern.bpm_default)
             self.steps_preview.set_pattern(new_pattern)
 
-            # Update pattern info display
-            self.update_pattern_info()
+            # Update chord progression display
+            self.update_chord_progression()
 
             # Configure metronome for the new pattern
             beats_per_bar = new_pattern.time_sig[0]
@@ -273,6 +400,10 @@ class PracticeView(QWidget):
         result = self.evaluator.add_step(step_index, timestamp)
         if result:
             self.timeline.set_step_accuracy(result.step_index, result.deviation_ms)
+        
+        # Advance chord progression on bar boundaries
+        if step_index % self.current_pattern.steps_per_bar == 0:
+            self.advance_chord()
 
     def on_practice_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for audio feedback (callback)."""

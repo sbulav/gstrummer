@@ -16,6 +16,8 @@ from PySide6.QtGui import QFont, QKeySequence, QShortcut
 from .components.timeline import TimelineWidget
 from .components.transport import TransportControls
 from .components.steps_preview import StepsPreviewWidget
+from .components.progression_controls import ProgressionControlsWidget
+from .components.chord_display import ChordDisplayWidget
 
 
 class SongView(QWidget):
@@ -49,13 +51,6 @@ class SongView(QWidget):
 
         header_layout.addStretch()
 
-        self.song_title = QLabel("Выберите песню")
-        self.song_title.setFont(QFont("Arial", 16, QFont.Bold))
-        self.song_title.setAlignment(Qt.AlignCenter)
-        header_layout.addWidget(self.song_title)
-
-        header_layout.addStretch()
-
         layout.addLayout(header_layout)
 
         # Main content area with splitter
@@ -82,11 +77,29 @@ class SongView(QWidget):
 
         structure_layout.addLayout(section_layout)
 
-        # All chords reference
-        self.chords_label = QLabel("Аккорды в песне: ")
-        self.chords_label.setFont(QFont("Arial", 10))
-        self.chords_label.setWordWrap(True)
-        structure_layout.addWidget(self.chords_label)
+        # Chord progression section with two panes
+        chord_section_layout = QHBoxLayout()
+
+        # Left pane: progression controls
+        progression_group = QGroupBox("Управление песней")
+        progression_group_layout = QVBoxLayout(progression_group)
+        self.progression_controls = ProgressionControlsWidget()
+        self.progression_controls.next_progression_clicked.connect(self.next_section)
+        progression_group_layout.addWidget(self.progression_controls)
+        chord_section_layout.addWidget(progression_group)
+
+        # Right pane: chord display
+        chords_group = QGroupBox("Прогрессия аккордов")
+        chords_group_layout = QVBoxLayout(chords_group)
+        self.chord_display = ChordDisplayWidget()
+        chords_group_layout.addWidget(self.chord_display)
+        chord_section_layout.addWidget(chords_group)
+
+        # Give more space to the chord display
+        chord_section_layout.setStretch(0, 1)
+        chord_section_layout.setStretch(1, 3)
+
+        structure_layout.addLayout(chord_section_layout)
 
         # Current section info
         section_info_layout = QHBoxLayout()
@@ -204,13 +217,9 @@ class SongView(QWidget):
         """Set the current song for practice."""
         self.current_song = song
         if song:
-            # Update UI components
-            self.song_title.setText(f"{song.artist} - {song.title}")
-
-            # Update all chords display
-            if song.all_chords:
-                chords_text = "Аккорды в песне: " + " | ".join(song.all_chords)
-                self.chords_label.setText(chords_text)
+            # Update progression controls and chord display
+            self.progression_controls.set_song(song)
+            self.chord_display.set_song(song)
 
             # Setup sections
             self.setup_song_structure()
@@ -283,6 +292,9 @@ class SongView(QWidget):
         if pattern_id in self.patterns:
             pattern = self.patterns[pattern_id]
             self.load_pattern_for_section(pattern, section)
+        
+        # Update chord display for this section
+        self.chord_display.set_section(section)
 
         # Update BPM (section override or song default)
         bpm = section.bpm_override or self.current_song.bpm
