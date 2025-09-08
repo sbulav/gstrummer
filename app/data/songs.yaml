@@ -165,3 +165,114 @@
   progression: ["Em", "C", "G", "D"]
   notes: "Баллада с рисунком DDU UDU"
 
+
+# Extended format examples with verse/chorus structure
+- title: "Wonderwall"
+  artist: "Oasis"
+  bpm: 82
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["Em7", "G", "D", "C"]  # Keep for practice mode
+  structure:
+    verse:
+      chords: ["Em7", "G", "D", "C"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    pre_chorus:
+      chords: ["C", "D", "Em7"]
+      pattern: "ddu_udu"
+      bars: 1
+    chorus:
+      chords: ["C", "D", "G", "Em7", "C", "D", "G"]
+      pattern: "rock_8"
+      bars: 4
+  all_chords: ["Em7", "G", "D", "C"]
+  difficulty: "beginner"
+  notes: "Practice verse progression first, then add chorus. Em7 = 022030"
+
+- title: "Let It Be"
+  artist: "The Beatles"
+  bpm: 73
+  time_sig: [4,4]
+  pattern_id: "down_up"
+  progression: ["C", "G", "Am", "F"]  # Keep for practice
+  structure:
+    verse:
+      chords: ["C", "G", "Am", "F", "C", "G", "F", "Em", "Dm", "C"]
+      pattern: "down_up"
+      bars: 4
+      repeat: 1
+    chorus:
+      chords: ["Am", "G", "F", "C", "G", "F", "C", "Dm", "C"]
+      pattern: "ddu_udu"
+      bars: 4
+  all_chords: ["C", "G", "Am", "F", "Em", "Dm"]
+  difficulty: "beginner"
+  notes: "Classic beginner song. Start slow, focus on clean chord changes"
+
+- title: "Zombie"
+  artist: "The Cranberries"
+  bpm: 84
+  time_sig: [4,4]
+  pattern_id: "rock_8"
+  progression: ["Em", "C", "G", "D"]  # Keep for practice
+  structure:
+    verse:
+      chords: ["Em", "C", "G", "D"]
+      pattern: "down_up"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Em", "C", "G", "D"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Em", "C", "G", "D"]
+      pattern: "ddu_udu"
+      bars: 2
+  all_chords: ["Em", "C", "G", "D"]
+  difficulty: "beginner"
+  notes: "Same chord progression throughout, good for practicing rhythm changes"
+
+- title: "Good Riddance (Time of Your Life)"
+  artist: "Green Day"
+  bpm: 94
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["G", "C", "D"]  # Keep for practice
+  structure:
+    verse:
+      chords: ["G", "G", "C", "D", "G", "G", "C", "D"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Em", "D", "C", "G", "Em", "D", "C", "G"]
+      pattern: "ddu_udu"
+      bars: 4
+  all_chords: ["G", "C", "D", "Em"]
+  difficulty: "beginner"
+  notes: "Only 4 chords total, perfect for beginners. Focus on rhythm"
+
+- title: "House of the Rising Sun"
+  artist: "The Animals"
+  bpm: 76
+  time_sig: [4,4]
+  pattern_id: "shestorka"
+  progression: ["Am", "C", "D", "F"]  # Keep for practice
+  structure:
+    verse:
+      chords: ["Am", "C", "D", "F", "Am", "C", "E", "Am"]
+      pattern: "shestorka"
+      bars: 8
+      repeat: 1
+    chorus:
+      chords: ["Am", "C", "D", "F", "Am", "E", "Am"]
+      pattern: "shestorka"
+      bars: 4
+  all_chords: ["Am", "C", "D", "F", "E"]
+  difficulty: "intermediate"
+  notes: "Classic fingerpicking song adapted for strumming. Practice Am-E change"
+
