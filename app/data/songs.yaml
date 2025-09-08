@@ -141,3 +141,19 @@
   pattern_id: "vosmerka"
   progression: ["Am", "F", "G", "C"]
   notes: "Восьмерка, балладный темп."
+
+- title: "Сансара"
+  artist: "Баста"
+  bpm: 80
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["Am", "F", "C", "G"]
+  notes: "Баллада с рисунком DDU UDU"
+
+- title: "Медлячок"
+  artist: "Валентин Стрыкало"
+  bpm: 72
+  time_sig: [4,4]
+  pattern_id: "ddu_udu"
+  progression: ["Am", "C", "G", "F"]
+  notes: "Медленный бой DDU UDU"
