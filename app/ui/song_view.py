@@ -18,6 +18,7 @@ from .components.transport import TransportControls
 from .components.steps_preview import StepsPreviewWidget
 from .components.progression_controls import ProgressionControlsWidget
 from .components.chord_display import ChordDisplayWidget
+from .components.song_info_popup import SongInfoPopup
 
 
 class SongView(QWidget):
@@ -32,7 +33,9 @@ class SongView(QWidget):
         self.current_song = None
         self.current_section = None
         self.patterns = {}
+        self.songs = []
         self.current_section_index = 0
+        self.song_info_popup = None
 
         self.init_ui()
         self.setup_connections()
@@ -42,12 +45,21 @@ class SongView(QWidget):
         """Initialize the song view UI."""
         layout = QVBoxLayout(self)
 
-        # Header with back button and song info
+        # Header with back button and song selector
         header_layout = QHBoxLayout()
 
         self.back_button = QPushButton("← Назад в меню")
         self.back_button.clicked.connect(self.back_requested.emit)
         header_layout.addWidget(self.back_button)
+
+        header_layout.addStretch()
+        
+        # Song selector
+        header_layout.addWidget(QLabel("Песня:"))
+        self.song_combo = QComboBox()
+        self.song_combo.setMinimumWidth(300)
+        self.song_combo.currentTextChanged.connect(self.on_song_changed)
+        header_layout.addWidget(self.song_combo)
 
         header_layout.addStretch()
 
@@ -148,7 +160,7 @@ class SongView(QWidget):
 
         splitter.addWidget(timeline_group)
 
-        # Transport controls and song info
+        # Transport controls
         controls_widget = QWidget()
         controls_layout = QVBoxLayout(controls_widget)
 
@@ -156,23 +168,12 @@ class SongView(QWidget):
         self.transport = TransportControls()
         controls_layout.addWidget(self.transport)
 
-        # Song information
-        info_group = QGroupBox("Информация о песне")
-        info_layout = QVBoxLayout(info_group)
-
-        self.song_info = QTextEdit()
-        self.song_info.setMaximumHeight(100)
-        self.song_info.setReadOnly(True)
-        info_layout.addWidget(self.song_info)
-
-        controls_layout.addWidget(info_group)
-
         splitter.addWidget(controls_widget)
 
-        # Set splitter proportions
+        # Set splitter proportions (rhythm visualization gets most space like in practice view)
         splitter.setStretchFactor(0, 1)  # Structure
-        splitter.setStretchFactor(1, 3)  # Timeline gets most space
-        splitter.setStretchFactor(2, 1)  # Controls
+        splitter.setStretchFactor(1, 3)  # Rhythm visualization gets 3x more space 
+        splitter.setStretchFactor(2, 1)  # Transport controls
 
         layout.addWidget(splitter)
 
@@ -183,6 +184,11 @@ class SongView(QWidget):
         self.prev_section_btn = QPushButton("◀ Предыдущая секция")
         self.prev_section_btn.clicked.connect(self.previous_section)
         nav_layout.addWidget(self.prev_section_btn)
+
+        # Song info button
+        self.song_info_btn = QPushButton("ℹ Информация о песне")
+        self.song_info_btn.clicked.connect(self.show_song_info_popup)
+        nav_layout.addWidget(self.song_info_btn)
 
         self.next_section_btn = QPushButton("Следующая секция ▶")
         self.next_section_btn.clicked.connect(self.next_section)
@@ -223,9 +229,6 @@ class SongView(QWidget):
 
             # Setup sections
             self.setup_song_structure()
-
-            # Update song info
-            self.update_song_info()
 
     def setup_song_structure(self):
         """Setup the song structure UI elements."""
@@ -346,32 +349,37 @@ class SongView(QWidget):
     def set_patterns(self, patterns):
         """Set available patterns."""
         self.patterns = patterns
+        
+    def set_songs(self, songs):
+        """Set available songs."""
+        self.songs = songs
+        self.populate_song_combo()
+        
+    def populate_song_combo(self):
+        """Populate the song selection combo box."""
+        self.song_combo.clear()
+        self.song_combo.addItem("Выберите песню...", None)
+        
+        for song in self.songs:
+            display_name = f"{song.artist} - {song.title}"
+            self.song_combo.addItem(display_name, song)
+            
+    def on_song_changed(self, song_text: str):
+        """Handle song selection change."""
+        song = self.song_combo.currentData()
+        if song:
+            self.set_song(song)
 
-    def update_song_info(self):
-        """Update the song information display."""
+    def show_song_info_popup(self):
+        """Show the song information popup dialog."""
         if not self.current_song:
-            self.song_info.setText("Песня не выбрана")
             return
-
-        song = self.current_song
-        time_sig = f"{song.time_sig[0]}/{song.time_sig[1]}"
-
-        info_text = f"""
-<b>Песня:</b> {song.title}<br>
-<b>Исполнитель:</b> {song.artist}<br>
-<b>Размер:</b> {time_sig}<br>
-<b>Темп:</b> {song.bpm} BPM<br>
-<b>Сложность:</b> {song.difficulty or "Не указана"}<br><br>
-<b>Заметки:</b><br>
-{song.notes}
-        """.strip()
-
-        if song.has_extended_structure():
-            sections = song.get_section_names()
-            sections_text = ", ".join([s.replace("_", " ").title() for s in sections])
-            info_text += f"<br><br><b>Секции:</b> {sections_text}"
-
-        self.song_info.setHtml(info_text)
+            
+        if not self.song_info_popup:
+            self.song_info_popup = SongInfoPopup(self)
+            
+        self.song_info_popup.set_song(self.current_song)
+        self.song_info_popup.exec()
 
     def on_section_changed(self, section_text):
         """Handle section change from combo box."""
@@ -454,6 +462,9 @@ class SongView(QWidget):
         self.timeline.set_current_step(step_index)
         self.steps_preview.set_current_step(step_index)
 
+        # Update chord progression highlighting
+        self._update_chord_highlighting(step_index)
+
         # Handle auto-advance between sections
         if self.auto_advance.isChecked() and self.current_section:
             # Calculate if we've completed this section
@@ -469,6 +480,23 @@ class SongView(QWidget):
                 ):
                     # Auto-advance to next section
                     self.next_section()
+                    
+    def _update_chord_highlighting(self, step_index: int):
+        """Update chord highlighting based on current step."""
+        if not self.current_section:
+            return
+            
+        # Get pattern to calculate bars
+        pattern = self.patterns.get(self.current_section.pattern)
+        if not pattern:
+            return
+            
+        # Calculate current bar and chord index
+        steps_per_bar = pattern.steps_per_bar
+        current_bar = (step_index // steps_per_bar) % len(self.current_section.chords)
+        
+        # Highlight current chord
+        self.chord_display.highlight_chord(current_bar)
 
     def on_practice_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for audio feedback."""

@@ -13,6 +13,7 @@ from core.patterns import load_patterns, load_songs
 from core.metronome import Metronome
 from core.audio_engine import AudioEngine
 from ui.practice_view import PracticeView
+from ui.song_view import SongView
 
 
 class MainWindow(QMainWindow):
@@ -110,10 +111,12 @@ class MainWindow(QMainWindow):
         # Create views
         self.main_menu = self.create_main_menu()
         self.practice_view = PracticeView(self.audio_engine, self.metronome)
+        self.song_view = SongView(self.audio_engine, self.metronome)
         
         # Add views to stack
         self.stacked_widget.addWidget(self.main_menu)
         self.stacked_widget.addWidget(self.practice_view)
+        self.stacked_widget.addWidget(self.song_view)
         
         # Start with main menu
         self.show_main_menu()
@@ -142,6 +145,9 @@ class MainWindow(QMainWindow):
         """Setup signal connections."""
         # Practice view connections
         self.practice_view.back_requested.connect(self.show_main_menu)
+        
+        # Song view connections
+        self.song_view.back_requested.connect(self.show_main_menu)
         
         # Metronome connections for status updates
         self.metronome.started.connect(lambda: self.statusBar().showMessage("Метроном запущен"))
@@ -198,10 +204,25 @@ class MainWindow(QMainWindow):
         quiz_btn.setStyleSheet("background-color: #bdc3c7; color: #7f8c8d; border-radius: 6px;")
         mode_layout.addWidget(quiz_btn)
         
-        song_btn = QPushButton("🎤 Песни (скоро)")
-        song_btn.setMinimumHeight(40)
-        song_btn.setEnabled(False)
-        song_btn.setStyleSheet("background-color: #bdc3c7; color: #7f8c8d; border-radius: 6px;")
+        song_btn = QPushButton("🎤 Песни")
+        song_btn.setMinimumHeight(50)
+        song_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #a93226;
+            }
+        """)
+        song_btn.clicked.connect(self.show_songs)
         mode_layout.addWidget(song_btn)
         
         left_layout.addWidget(mode_group)
@@ -331,6 +352,16 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.warning(self, "Выбор ритма", 
                               "Пожалуйста, выберите ритм для практики")
+    
+    def show_songs(self):
+        """Show song view with song selection."""
+        # Setup song view with patterns and songs
+        self.song_view.set_patterns(self.patterns)
+        self.song_view.set_songs(self.songs)
+        
+        # Switch to song view
+        self.stacked_widget.setCurrentIndex(2)
+        self.statusBar().showMessage("Режим: Изучение песен")
     
     def apply_stylesheet(self):
         """Apply global stylesheet to the application."""
