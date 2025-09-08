@@ -8,13 +8,13 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt
 
 # Add app to Python path
-sys.path.insert(0, 'app')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 
 try:
     from ui.components.audio_status_bar import AudioStatusBar
-    from ui.components.audio_settings_popup import AudioSettingsPopup
+    from app.ui.components.audio_settings_popup import AudioSettingsPopup
     from core.audio_engine import AudioEngine
-    from core.metronome import Metronome
+    from app.core.metronome import Metronome
 except ImportError as e:
     print(f"Import error: {e}")
     sys.exit(1)

@@ -6,12 +6,12 @@ Shows how the mute buttons and enable/disable checkboxes work.
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel
 from PySide6.QtCore import Qt
-from ui.components.volume_controls import VolumeControls
-from core.audio_engine import AudioEngine
+from app.ui.components.volume_controls import VolumeControls
+from app.core.audio_engine import AudioEngine
 
 
 class AudioControlsTestWindow(QMainWindow):

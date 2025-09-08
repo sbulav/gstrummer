@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PySide6.QtCore import QTimer
 
 # Import the widget and pattern classes
-from app.ui.components.steps_preview import StepsPreviewWidget
+from ui.components.steps_preview import StepsPreviewWidget
 from app.core.patterns import StrumPattern, Step
 
 def create_test_pattern():

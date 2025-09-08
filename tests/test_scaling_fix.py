@@ -8,10 +8,10 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt
 
 # Add app to Python path
-sys.path.insert(0, 'app')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 
 from ui.components.volume_controls import VolumeControls
-from core.audio_engine import AudioEngine
+from app.core.audio_engine import AudioEngine
 
 
 class ScalingTestWindow(QMainWindow):

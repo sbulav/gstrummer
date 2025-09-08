@@ -7,10 +7,10 @@ import sys
 import os
 
 # Add the app directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 
 from core.patterns import load_songs, load_patterns
-from utils.io import load_and_validate_songs
+from app.utils.io import load_and_validate_songs
 
 def test_load_songs():
     """Test loading songs with extended structure."""
