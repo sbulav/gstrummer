@@ -11,10 +11,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence, QShortcut
+from time import monotonic
 
 from .components.timeline import TimelineWidget
 from .components.transport import TransportControls
 from .components.steps_preview import StepsPreviewWidget
+from app.core.evaluator import Evaluator
 
 
 class PracticeView(QWidget):
@@ -28,6 +30,8 @@ class PracticeView(QWidget):
         self.metronome = metronome
         self.current_pattern = None
         self.patterns = {}
+
+        self.evaluator = Evaluator()
 
         self.init_ui()
         self.setup_connections()
@@ -196,6 +200,8 @@ class PracticeView(QWidget):
         # Configure metronome callback for audio/visual feedback
         self.metronome.set_callback(self.on_practice_tick)
         self.metronome.start()
+        self.evaluator.reset()
+        self.timeline.clear_accuracy()
 
     def pause_practice(self):
         """Pause practice session."""
@@ -264,6 +270,10 @@ class PracticeView(QWidget):
         self.timeline.set_current_step(step_index)
         self.steps_preview.set_current_step(step_index)
 
+        result = self.evaluator.add_step(step_index, timestamp)
+        if result:
+            self.timeline.set_step_accuracy(result.step_index, result.deviation_ms)
+
     def on_practice_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for audio feedback (callback)."""
         if not self.current_pattern:
@@ -301,9 +311,8 @@ class PracticeView(QWidget):
         self.transport.set_playing(False)
 
     def on_step_hit(self, step_index: int):
-        """Handle step hit from timeline widget."""
-        # Could be used for user interaction feedback
-        pass
+        """Register manual onset from timeline widget."""
+        self.evaluator.add_onset(monotonic())
 
     def setup_shortcuts(self):
         """Setup keyboard shortcuts for better UX."""
