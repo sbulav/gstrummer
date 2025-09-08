@@ -1,11 +1,25 @@
-import numpy as np
-import sounddevice as sd
-import threading
-from typing import Dict, Optional, Any
 import logging
+import threading
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
+
+try:
+    import sounddevice as sd
+except Exception as exc:  # pragma: no cover - optional dependency
+    sd = None  # type: ignore[assignment]
+    logger.warning("sounddevice not available: %s", exc)
+
+
+@dataclass(eq=False)
+class QueuedSample:
+    data: np.ndarray
+    pos: int
+    volume: float
 
 
 class AudioEngine:
@@ -27,11 +41,15 @@ class AudioEngine:
         self._click_enabled = True
         self._strum_enabled = True
 
-        # Sample cache
+        # Sample cache - keeping the original format for backward compatibility but also supporting tuple format
         self._samples: Dict[str, np.ndarray] = {}
 
+        # Streaming output for persistent stream approach (if sounddevice available)
+        self._stream: Optional[Any] = None
+        self._active_samples: List[QueuedSample] = []
+
         # Audio device info
-        self._device_info = None
+        self._device_info: Optional[Any] = None
         self._audio_available = False
 
         # Thread safety
@@ -42,8 +60,13 @@ class AudioEngine:
         if self._audio_available:
             self._load_samples()
 
-    def _initialize_audio(self):
-        """Initialize sounddevice with error handling."""
+    def _initialize_audio(self) -> None:
+        """Initialize sounddevice with error handling and optional persistent stream."""
+        if sd is None:
+            logger.warning("sounddevice module not available, audio disabled")
+            self._audio_available = False
+            return
+
         try:
             # Get default output device
             self._device_info = sd.query_devices(kind="output")
@@ -56,11 +79,27 @@ class AudioEngine:
                 dtype=self._dtype,
             )
 
+            # Try to create persistent output stream with callback
+            try:
+                self._stream = sd.OutputStream(
+                    samplerate=self._sample_rate,
+                    channels=self._channels,
+                    blocksize=self._buffer_size,
+                    dtype=self._dtype,
+                    callback=self._audio_callback,
+                )
+                self._stream.start()
+                logger.info("Audio initialized with persistent stream")
+            except Exception as stream_exc:
+                logger.warning("Failed to create persistent stream, falling back to sd.play: %s", stream_exc)
+                self._stream = None
+
             self._audio_available = True
-            logger.info(f"Audio initialized: {self._device_info['name']}")
+            device_name = getattr(self._device_info, 'name', str(self._device_info))
+            logger.info("Audio initialized: %s", device_name)
 
         except Exception as e:
-            logger.warning(f"Audio initialization failed: {e}")
+            logger.warning("Audio initialization failed: %s", e)
             self._audio_available = False
 
     def _load_samples(self):
@@ -107,8 +146,9 @@ class AudioEngine:
         """
         try:
             import soundfile as sf
-
-            data, sr = sf.read(str(path), dtype="float32", always_2d=False)
+            result = sf.read(str(path), dtype="float32", always_2d=False)
+            data = result[0] if isinstance(result, tuple) else result  # type: ignore
+            sr = result[1] if isinstance(result, tuple) and len(result) > 1 else self._sample_rate  # type: ignore
         except Exception:
             try:
                 import wave
@@ -189,9 +229,35 @@ class AudioEngine:
 
         return sample.astype(self._dtype)
 
+    def _audio_callback(
+        self, outdata: np.ndarray, frames: int, callback_time: Any, status: Any
+    ) -> None:
+        """Mix active samples into the output buffer (used with persistent stream)."""
+        if status:
+            logger.warning("Audio callback status: %s", status)
+        
+        outdata.fill(0)
+        
+        with self._audio_lock:
+            if not self._active_samples:
+                return
+                
+            finished: List[QueuedSample] = []
+            for sample in self._active_samples:
+                start = sample.pos
+                end = min(start + frames, sample.data.shape[0])
+                chunk = sample.data[start:end]
+                outdata[: end - start, 0] += chunk * sample.volume * self._master_volume
+                sample.pos = end
+                if sample.pos >= sample.data.shape[0]:
+                    finished.append(sample)
+                    
+            for sample in finished:
+                self._active_samples.remove(sample)
+
     def _play_sample(self, sample_name: str, volume_multiplier: float = 1.0):
         """Play a sample with volume control."""
-        if not self._enabled or not self._audio_available:
+        if not self._enabled or not self._audio_available or sd is None:
             return
 
         if sample_name not in self._samples:
@@ -200,6 +266,22 @@ class AudioEngine:
             )
             self._samples[sample_name] = self._generate_sample(sample_name)
 
+        # If we have a persistent stream, use the callback approach
+        if self._stream is not None:
+            try:
+                data = self._samples[sample_name].copy()
+                data = np.asarray(data, dtype=self._dtype)
+                
+                with self._audio_lock:
+                    self._active_samples.append(
+                        QueuedSample(data=data, pos=0, volume=volume_multiplier)
+                    )
+                return
+            except Exception as e:
+                logger.warning(f"Stream playback failed for {sample_name}: {e}")
+                # Fall through to sd.play approach
+
+        # Fallback to sd.play approach
         try:
             with self._audio_lock:
                 sample = self._samples[sample_name].copy()
@@ -256,7 +338,7 @@ class AudioEngine:
         self._play_sample(sample_name, volume)
 
     def set_volumes(
-        self, click: float = None, strum: float = None, master: float = None
+        self, click: Optional[float] = None, strum: Optional[float] = None, master: Optional[float] = None
     ):
         """Set volume levels (0.0 to 1.0)."""
         with self._audio_lock:
@@ -299,17 +381,40 @@ class AudioEngine:
         """Check if audio system is available."""
         return self._audio_available
 
-    def get_device_info(self) -> Optional[Dict[str, Any]]:
+    def get_device_info(self) -> Optional[Any]:
         """Get current audio device information."""
         return self._device_info
 
     def stop_all(self):
         """Stop all currently playing sounds."""
-        if self._audio_available:
+        if not self._audio_available or sd is None:
+            return
+
+        # Clear active samples if using persistent stream
+        if self._stream is not None:
+            with self._audio_lock:
+                self._active_samples.clear()
+            # Restart stream to clear any pending audio
+            try:
+                self._stream.stop()
+                self._stream.start()
+            except Exception as e:
+                logger.warning(f"Failed to restart stream: {e}")
+        else:
+            # Use sd.stop for non-persistent approach
             sd.stop()
 
     def close(self):
         """Clean shutdown of audio system."""
-        self.stop_all()
-        if hasattr(sd, "get_stream") and sd.get_stream():
-            sd.get_stream().close()
+        if self._stream is not None:
+            try:
+                self._stream.stop()
+                self._stream.close()
+                self._stream = None
+            except Exception as e:
+                logger.warning(f"Error closing audio stream: {e}")
+        elif sd is not None and hasattr(sd, "get_stream") and sd.get_stream():
+            try:
+                sd.get_stream().close()
+            except Exception as e:
+                logger.warning(f"Error closing sounddevice stream: {e}")
