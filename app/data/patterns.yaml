@@ -65,38 +65,38 @@
 - id: vosmerka
   name: "Восьмерка (Русская 8-ка)"
   time_sig: [4,4]
-  steps_per_bar: 8
+  steps_per_bar: 16
   bpm_default: 80
   bpm_min: 60
   bpm_max: 140
-  notes: "Поочередно вниз-вверх, часто в балладах. Схема: D U D U D U D U"
+  notes: "D,,D,,UUUD,D,U"
   steps:
-    - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.125, dir: U}
-    - {t: 0.25,  dir: D}
-    - {t: 0.375, dir: U}
-    - {t: 0.5,   dir: D}
-    - {t: 0.625, dir: U}
-    - {t: 0.75,  dir: D}
-    - {t: 0.875, dir: U}
+    - {t: 0.0,    dir: D, accent: 1.0}
+    - {t: 0.1875, dir: D}
+    - {t: 0.375,  dir: U}
+    - {t: 0.4375, dir: U}
+    - {t: 0.5,    dir: U}
+    - {t: 0.5625, dir: D}
+    - {t: 0.6875, dir: D}
+    - {t: 0.8125, dir: U}
 
 - id: vosmerka_mute
   name: "Восьмерка с глушением"
   time_sig: [4,4]
-  steps_per_bar: 8
+  steps_per_bar: 16
   bpm_default: 80
   bpm_min: 60
   bpm_max: 140
-  notes: "Восьмерка с приглушенными ударами: D - D U - U D U"
+  notes: "D,,-,,UU-D,D,U"
   steps:
-    - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.125, dir: -}
-    - {t: 0.25,  dir: D}
-    - {t: 0.375, dir: U}
-    - {t: 0.5,   dir: -}
-    - {t: 0.625, dir: U}
-    - {t: 0.75,  dir: D}
-    - {t: 0.875, dir: U}
+    - {t: 0.0,    dir: D, accent: 1.0}
+    - {t: 0.1875, dir: -}
+    - {t: 0.375,  dir: U}
+    - {t: 0.4375, dir: U}
+    - {t: 0.5,    dir: -}
+    - {t: 0.5625, dir: D}
+    - {t: 0.6875, dir: D}
+    - {t: 0.8125, dir: U}
 
 - id: rock_8
   name: "Рок-восьмушки (акц. 2 и 4)"
