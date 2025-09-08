@@ -268,27 +268,25 @@ class PracticeView(QWidget):
             self.chord_display_widget.update()
             return
 
-        # Find songs that use this pattern
         matching_songs = [
             song for song in self.songs if song.pattern_id == self.current_pattern.id
         ]
 
         if matching_songs:
-            # Randomly select a song
             import random
 
             selected_song = random.choice(matching_songs)
 
-            # Use the progression from the song
             self.current_progression = selected_song.progression
             self.current_chord_index = 0
-
-            # Update song info
             self.song_title_label.setText(
                 f"{selected_song.title} - {selected_song.artist}"
             )
+
+            # NEW: auto-apply BPM for the selected song
+            self._apply_song_bpm(selected_song)
+
         else:
-            # No songs found for this pattern
             self.current_progression = []
             self.song_title_label.setText("Нет песен для этого ритма")
 
@@ -525,3 +523,26 @@ class PracticeView(QWidget):
     def cleanup(self):
         """Cleanup when view is closed."""
         self.metronome.stop()
+
+    def _apply_song_bpm(self, song):
+        """Try to read a BPM from the song and apply it safely."""
+        bpm = None
+        for attr in ("bpm", "tempo", "target_bpm", "default_bpm"):
+            v = getattr(song, attr, None)
+            if isinstance(v, (int, float)):
+                bpm = int(v)
+                break
+
+        if bpm is None:
+            return  # no tempo info on song; keep current BPM
+
+        # Clamp to the current pattern range if present
+        if self.current_pattern:
+            bpm = max(
+                self.current_pattern.bpm_min, min(self.current_pattern.bpm_max, bpm)
+            )
+
+        # Apply BPM to UI + audio
+        self.transport.set_bpm(bpm)
+        self.metronome.set_bpm(bpm)
+        self.timeline.set_bpm(bpm)

@@ -292,7 +292,7 @@ class SongView(QWidget):
         if pattern_id in self.patterns:
             pattern = self.patterns[pattern_id]
             self.load_pattern_for_section(pattern, section)
-        
+
         # Update chord display for this section
         self.chord_display.set_section(section)
 
@@ -361,7 +361,7 @@ class SongView(QWidget):
 <b>Исполнитель:</b> {song.artist}<br>
 <b>Размер:</b> {time_sig}<br>
 <b>Темп:</b> {song.bpm} BPM<br>
-<b>Сложность:</b> {song.difficulty or 'Не указана'}<br><br>
+<b>Сложность:</b> {song.difficulty or "Не указана"}<br><br>
 <b>Заметки:</b><br>
 {song.notes}
         """.strip()
