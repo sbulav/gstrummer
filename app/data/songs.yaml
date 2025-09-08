@@ -1,3 +1,59 @@
+- title: "Звезда по имени Солнце"
+  artist: "Кино"
+  bpm: 116
+  time_sig: [4,4]
+  pattern_id: "quarters_down"
+  progression: ["Am", "C", "Dm", "E"]
+  notes: "Четверти вниз, ровный ритм"
+
+- title: "Knockin' on Heaven's Door"
+  artist: "Bob Dylan"
+  bpm: 72
+  time_sig: [4,4]
+  pattern_id: "down_up"
+  progression: ["G", "D", "Am", "G"]
+  notes: "Простой бой вниз-вверх"
+
+- title: "Ты кинула"
+  artist: "Ляпис Трубецкой"
+  bpm: 95
+  time_sig: [4,4]
+  pattern_id: "shestorka_mute"
+  progression: ["Am", "F", "G", "Em"]
+  notes: "Шестерка с приглушкой"
+
+- title: "Все идет по плану"
+  artist: "Гражданская Оборона"
+  bpm: 90
+  time_sig: [4,4]
+  pattern_id: "vosmerka_mute"
+  progression: ["Am", "F", "G", "E"]
+  notes: "Восьмерка с глушением"
+
+- title: "Три белых коня"
+  artist: "Сергей Никитин"
+  bpm: 90
+  time_sig: [3,4]
+  pattern_id: "waltz_3_4"
+  progression: ["Am", "Dm", "E", "Am"]
+  notes: "Классический вальсовый рисунок"
+
+- title: "No Woman No Cry"
+  artist: "Bob Marley"
+  bpm: 75
+  time_sig: [4,4]
+  pattern_id: "reggae_offbeat"
+  progression: ["C", "G", "Am", "F"]
+  notes: "Регги с акцентом на оффбит"
+
+- title: "The Girl from Ipanema"
+  artist: "Antonio Carlos Jobim"
+  bpm: 120
+  time_sig: [4,4]
+  pattern_id: "bossa_nova"
+  progression: ["Fmaj7", "G7", "Gm7", "F#7"]
+  notes: "Босса-нова ритм"
+
 - title: "Группа крови"
   artist: "Кино"
   bpm: 92

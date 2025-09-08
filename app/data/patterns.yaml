@@ -1,3 +1,103 @@
+- id: quarters_down
+  name: "Четверти вниз"
+  time_sig: [4,4]
+  steps_per_bar: 4
+  bpm_default: 90
+  bpm_min: 60
+  bpm_max: 120
+  notes: "Удары вниз на каждую долю"
+  steps:
+    - {t: 0.0, dir: D, accent: 1.0}
+    - {t: 0.25, dir: D}
+    - {t: 0.5, dir: D}
+    - {t: 0.75, dir: D}
+
+- id: down_up
+  name: "Вниз-вверх простая"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 90
+  bpm_min: 60
+  bpm_max: 120
+  notes: "Чередование вниз-вверх без акцентов"
+  steps:
+    - {t: 0.0, dir: D, accent: 1.0}
+    - {t: 0.125, dir: U}
+    - {t: 0.25, dir: D}
+    - {t: 0.375, dir: U}
+    - {t: 0.5, dir: D}
+    - {t: 0.625, dir: U}
+    - {t: 0.75, dir: D}
+    - {t: 0.875, dir: U}
+
+- id: shestorka
+  name: "Шестерка (Русская 6-ка)"
+  time_sig: [4,4]
+  steps_per_bar: 6
+  bpm_default: 90
+  bpm_min: 60
+  bpm_max: 180
+  notes: "Классика дворового рока. Схема: D U D D U D"
+  steps:
+    - {t: 0.0,   dir: D, accent: 1.0}
+    - {t: 0.166, dir: U}
+    - {t: 0.333, dir: D}
+    - {t: 0.5,   dir: D}
+    - {t: 0.666, dir: U}
+    - {t: 0.833, dir: D}
+
+- id: shestorka_mute
+  name: "Шестерка с глушением"
+  time_sig: [4,4]
+  steps_per_bar: 6
+  bpm_default: 90
+  bpm_min: 60
+  bpm_max: 180
+  notes: "Классическая шестерка с приглушкой на 4-й доле (D U D - U D)"
+  steps:
+    - {t: 0.0,   dir: D, accent: 1.0}
+    - {t: 0.166, dir: U}
+    - {t: 0.333, dir: D}
+    - {t: 0.5,   dir: -}
+    - {t: 0.666, dir: U}
+    - {t: 0.833, dir: D}
+
+- id: vosmerka
+  name: "Восьмерка (Русская 8-ка)"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 80
+  bpm_min: 60
+  bpm_max: 140
+  notes: "Поочередно вниз-вверх, часто в балладах. Схема: D U D U D U D U"
+  steps:
+    - {t: 0.0,   dir: D, accent: 1.0}
+    - {t: 0.125, dir: U}
+    - {t: 0.25,  dir: D}
+    - {t: 0.375, dir: U}
+    - {t: 0.5,   dir: D}
+    - {t: 0.625, dir: U}
+    - {t: 0.75,  dir: D}
+    - {t: 0.875, dir: U}
+
+- id: vosmerka_mute
+  name: "Восьмерка с глушением"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 80
+  bpm_min: 60
+  bpm_max: 140
+  notes: "Восьмерка с приглушенными ударами: D - D U - U D U"
+  steps:
+    - {t: 0.0,   dir: D, accent: 1.0}
+    - {t: 0.125, dir: -}
+    - {t: 0.25,  dir: D}
+    - {t: 0.375, dir: U}
+    - {t: 0.5,   dir: -}
+    - {t: 0.625, dir: U}
+    - {t: 0.75,  dir: D}
+    - {t: 0.875, dir: U}
+
 - id: rock_8
   name: "Рок-восьмушки (акц. 2 и 4)"
   time_sig: [4,4]
@@ -76,36 +176,38 @@
     - {t: 0.6667, dir: U}
     - {t: 0.8333, dir: -}
 
-- id: shestorka
-  name: "Шестерка (Русская 6-ка)"
-  time_sig: [4,4]
-  steps_per_bar: 6
-  bpm_default: 90
-  bpm_min: 60
-  bpm_max: 180
-  notes: "Классика дворового рока. Схема: D U D D U D"
-  steps:
-    - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.166, dir: U}
-    - {t: 0.333, dir: D}
-    - {t: 0.5,   dir: D}
-    - {t: 0.666, dir: U}
-    - {t: 0.833, dir: D}
-
-- id: vosmerka
-  name: "Восьмерка (Русская 8-ка)"
+- id: reggae_offbeat
+  name: "Регги оффбит"
   time_sig: [4,4]
   steps_per_bar: 8
-  bpm_default: 80
+  bpm_default: 72
   bpm_min: 60
-  bpm_max: 140
-  notes: "Поочередно вниз-вверх, часто в балладах. Схема: D U D U D U D U"
+  bpm_max: 120
+  notes: "Акценты вверх на слабые доли"
   steps:
-    - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.125, dir: U}
-    - {t: 0.25,  dir: D}
-    - {t: 0.375, dir: U}
-    - {t: 0.5,   dir: D}
+    - {t: 0.0, dir: -}
+    - {t: 0.125, dir: U, accent: 0.9}
+    - {t: 0.25, dir: -}
+    - {t: 0.375, dir: U, accent: 0.9}
+    - {t: 0.5, dir: -}
+    - {t: 0.625, dir: U, accent: 0.9}
+    - {t: 0.75, dir: -}
+    - {t: 0.875, dir: U, accent: 0.9}
+
+- id: bossa_nova
+  name: "Босса-нова"
+  time_sig: [4,4]
+  steps_per_bar: 8
+  bpm_default: 120
+  bpm_min: 80
+  bpm_max: 160
+  notes: "Латиноамериканский рисунок: D - U D - U D U"
+  steps:
+    - {t: 0.0, dir: D, accent: 1.0}
+    - {t: 0.125, dir: -}
+    - {t: 0.25, dir: U}
+    - {t: 0.375, dir: D}
+    - {t: 0.5, dir: -}
     - {t: 0.625, dir: U}
-    - {t: 0.75,  dir: D}
+    - {t: 0.75, dir: D}
     - {t: 0.875, dir: U}
