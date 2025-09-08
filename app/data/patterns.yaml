@@ -37,7 +37,7 @@
   bpm_default: 90
   bpm_min: 60
   bpm_max: 180
-  notes: "Классика дворового рока. Схема: D U D D U D (пауза на 4-й доле)"
+  notes: "Классика дворового рока. Схема: D U D D U D--"
   steps:
     - {t: 0.0,   dir: D, accent: 1.0}
     - {t: 0.125, dir: U}
@@ -45,6 +45,8 @@
     - {t: 0.375, dir: D, accent: 0.8}
     - {t: 0.5,   dir: U}
     - {t: 0.625, dir: D}
+    - {t: 0.75,  dir: -}
+    - {t: 0.875, dir: -}
 
 - id: shestorka_mute
   name: "Шестерка с глушением"
@@ -53,7 +55,7 @@
   bpm_default: 90
   bpm_min: 60
   bpm_max: 180
-  notes: "Классическая шестерка с приглушкой на 4-й доле (D U D - U D)"
+  notes: "Классическая шестерка с приглушкой на 4-й доле (D U D - U D--)"
   steps:
     - {t: 0.0,   dir: D, accent: 1.0}
     - {t: 0.125, dir: U}
@@ -61,6 +63,8 @@
     - {t: 0.375, dir: -, accent: 0.8}
     - {t: 0.5,   dir: U}
     - {t: 0.625, dir: D}
+    - {t: 0.75,  dir: -}
+    - {t: 0.875, dir: -}
 
 - id: vosmerka
   name: "Восьмерка (Русская 8-ка)"
@@ -69,16 +73,24 @@
   bpm_default: 80
   bpm_min: 60
   bpm_max: 140
-  notes: "D,,D,,UUUD,D,U"
+  notes: "D--D--UUUD-D-U--"
   steps:
     - {t: 0.0,    dir: D, accent: 1.0}
+    - {t: 0.0625, dir: -}
+    - {t: 0.125,  dir: -}
     - {t: 0.1875, dir: D}
+    - {t: 0.25,   dir: -}
+    - {t: 0.3125, dir: -}
     - {t: 0.375,  dir: U}
     - {t: 0.4375, dir: U}
     - {t: 0.5,    dir: U}
     - {t: 0.5625, dir: D}
+    - {t: 0.625,  dir: -}
     - {t: 0.6875, dir: D}
+    - {t: 0.75,   dir: -}
     - {t: 0.8125, dir: U}
+    - {t: 0.875,  dir: -}
+    - {t: 0.9375, dir: -}
 
 - id: vosmerka_mute
   name: "Восьмерка с глушением"
@@ -87,16 +99,24 @@
   bpm_default: 80
   bpm_min: 60
   bpm_max: 140
-  notes: "D,,-,,UU-D,D,U"
+  notes: "D-----UU-D-D-U--"
   steps:
     - {t: 0.0,    dir: D, accent: 1.0}
+    - {t: 0.0625, dir: -}
+    - {t: 0.125,  dir: -}
     - {t: 0.1875, dir: -}
+    - {t: 0.25,   dir: -}
+    - {t: 0.3125, dir: -}
     - {t: 0.375,  dir: U}
     - {t: 0.4375, dir: U}
     - {t: 0.5,    dir: -}
     - {t: 0.5625, dir: D}
+    - {t: 0.625,  dir: -}
     - {t: 0.6875, dir: D}
+    - {t: 0.75,   dir: -}
     - {t: 0.8125, dir: U}
+    - {t: 0.875,  dir: -}
+    - {t: 0.9375, dir: -}
 
 - id: rock_8
   name: "Рок-восьмушки (акц. 2 и 4)"

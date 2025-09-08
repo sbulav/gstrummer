@@ -1,6 +1,6 @@
 from time import monotonic
 
-from PySide6.QtCore import QPoint, QRect, Qt, Signal, QTimer
+from PySide6.QtCore import QPoint, QRect, Qt, Signal, QTimer, QSize
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -66,8 +66,17 @@ class TimelineWidget(QWidget):
         self.setMouseTracking(True)
 
         # Font
-        self.font = QFont("Arial", 10, QFont.Bold)
+        self._font = QFont("Arial", 10, QFont.Bold)
 
+    def sizeHint(self) -> QSize:
+        """Provide a dynamic size hint for the widget."""
+        if not self.pattern:
+            return QSize(800, 200)
+
+        base_step = 65 if self.steps_per_bar > 12 else 80
+        width = self.steps_per_bar * base_step + 2 * self.margin
+        return QSize(width, self.minimumHeight())
+        
     def set_pattern(self, pattern):
         """Set the strumming pattern to display."""
         self.pattern = pattern
@@ -127,9 +136,10 @@ class TimelineWidget(QWidget):
         if not self.pattern:
             return
 
-        base_step = 80
+        base_step = 65 if self.steps_per_bar > 12 else 80
         total_width = self.steps_per_bar * base_step + 2 * self.margin
         self.setMinimumWidth(total_width)
+        self.updateGeometry()
 
     def paintEvent(self, event):
         """Draw the timeline visualization."""
@@ -151,7 +161,7 @@ class TimelineWidget(QWidget):
 
         if not self.pattern:
             painter.setPen(self.step_color)
-            painter.setFont(self.font)
+            painter.setFont(self._font)
             painter.drawText(bar_rect, Qt.AlignCenter, "No pattern selected")
             return
 
@@ -272,7 +282,7 @@ class TimelineWidget(QWidget):
         bottom = int(y + size / 2)
         painter.drawLine(shaft_x, top, shaft_x, bottom)
 
-        head_width = int(size * 0.5)
+        head_width = min(int(size * 0.5), int(self.step_width * 0.8))
         head_height = int(size * 0.35)
         points = [
             QPoint(shaft_x, bottom),
@@ -291,7 +301,7 @@ class TimelineWidget(QWidget):
         bottom = int(y + size / 2)
         painter.drawLine(shaft_x, top, shaft_x, bottom)
 
-        head_width = int(size * 0.5)
+        head_width = min(int(size * 0.5), int(self.step_width * 0.8))
         head_height = int(size * 0.35)
         points = [
             QPoint(shaft_x, top),

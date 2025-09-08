@@ -13,6 +13,7 @@ class StepsPreviewWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumSize(300, 200)
+        self.setMaximumWidth(400)
 
         # Pattern data
         self.pattern = None

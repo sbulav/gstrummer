@@ -54,8 +54,8 @@ class PracticeView(QWidget):
         header_layout.addStretch()
 
         self.pattern_title = QLabel("Выберите ритм")
-        self.pattern_title.setFont(QFont("Arial", 16, QFont.Bold))
-        self.pattern_title.setAlignment(Qt.AlignCenter)
+        self.pattern_title.setFont(QFont("Arial", 16, QFont.Weight.Bold))
+        self.pattern_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(self.pattern_title)
 
         header_layout.addStretch()
@@ -63,7 +63,7 @@ class PracticeView(QWidget):
         layout.addLayout(header_layout)
 
         # Main content area with splitter
-        splitter = QSplitter(Qt.Vertical)
+        splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Timeline visualization (main focus) - now with horizontal split
         timeline_group = QGroupBox("Визуализация ритма")
@@ -78,22 +78,23 @@ class PracticeView(QWidget):
         timeline_layout.addLayout(controls_line)
 
         # Horizontal splitter for timeline and preview
-        timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
+        # Horizontal splitter for timeline and preview
+        self.timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Timeline widget (left side)
         self.timeline = TimelineWidget()
-        timeline_splitter.addWidget(self.timeline)
+        self.timeline_splitter.addWidget(self.timeline)
         self.timeline.set_show_grid(self.grid_checkbox.isChecked())
 
         # Steps preview (right side)
         self.steps_preview = StepsPreviewWidget()
-        timeline_splitter.addWidget(self.steps_preview)
+        self.timeline_splitter.addWidget(self.steps_preview)
 
         # Set proportions: timeline gets 70%, preview gets 30%
-        timeline_splitter.setStretchFactor(0, 7)
-        timeline_splitter.setStretchFactor(1, 3)
+        self.timeline_splitter.setStretchFactor(0, 7)
+        self.timeline_splitter.setStretchFactor(1, 3)
 
-        timeline_layout.addWidget(timeline_splitter)
+        timeline_layout.addWidget(self.timeline_splitter)
 
         splitter.addWidget(timeline_group)
 
@@ -211,6 +212,19 @@ class PracticeView(QWidget):
             self.timeline.set_bpm(pattern.bpm_default)
             self.steps_preview.set_pattern(pattern)
 
+            # Hide or show steps_preview pane for 16 steps
+            idx = self.timeline_splitter.indexOf(self.steps_preview)
+            if pattern.steps_per_bar == 16:
+                if idx != -1:
+                    self.timeline_splitter.widget(idx).setParent(None)
+                self.timeline_splitter.setStretchFactor(0, 1)
+            else:
+                if idx == -1:
+                    self.timeline_splitter.addWidget(self.steps_preview)
+                    self.timeline_splitter.setStretchFactor(0, 7)
+                    self.timeline_splitter.setStretchFactor(1, 3)
+                self.steps_preview.show()
+
             # Update transport controls
             self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
             self.transport.set_bpm(pattern.bpm_default)
@@ -222,6 +236,7 @@ class PracticeView(QWidget):
             beats_per_bar = pattern.time_sig[0]
             self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
             self.metronome.set_bpm(pattern.bpm_default)
+
 
     def set_patterns(self, patterns):
         """Set available patterns for selection."""
@@ -363,6 +378,22 @@ class PracticeView(QWidget):
             # Update chord progression display
             self.update_chord_progression()
 
+            # Hide steps preview for 16-step patterns to avoid overlap
+            if new_pattern.steps_per_bar == 16:
+                # Remove steps_preview if still present
+                idx = self.timeline_splitter.indexOf(self.steps_preview)
+                if idx != -1:
+                    self.timeline_splitter.widget(idx).setParent(None)
+                self.timeline_splitter.setStretchFactor(0, 1)  # timeline gets 100%
+            else:
+                # Add steps_preview back if missing
+                idx = self.timeline_splitter.indexOf(self.steps_preview)
+                if idx == -1:
+                    self.timeline_splitter.addWidget(self.steps_preview)
+                    self.timeline_splitter.setStretchFactor(0, 7)
+                    self.timeline_splitter.setStretchFactor(1, 3)
+                self.steps_preview.show()
+
             # Configure metronome for the new pattern
             beats_per_bar = new_pattern.time_sig[0]
             self.metronome.steps_per_beat = new_pattern.steps_per_bar // beats_per_bar
@@ -448,22 +479,22 @@ class PracticeView(QWidget):
     def setup_shortcuts(self):
         """Setup keyboard shortcuts for better UX."""
         # Play/Pause - Space bar
-        self.play_shortcut = QShortcut(QKeySequence(Qt.Key_Space), self)
+        self.play_shortcut = QShortcut(QKeySequence("Space"), self)
         self.play_shortcut.activated.connect(self.transport.on_play_pause_clicked)
 
         # Stop - Escape
-        self.stop_shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        self.stop_shortcut = QShortcut(QKeySequence("Escape"), self)
         self.stop_shortcut.activated.connect(self.transport.on_stop_clicked)
 
         # BPM adjustment
-        self.bpm_up_shortcut = QShortcut(QKeySequence(Qt.Key_Plus), self)
+        self.bpm_up_shortcut = QShortcut(QKeySequence("+"), self)
         self.bpm_up_shortcut.activated.connect(lambda: self.transport.adjust_bpm(5))
 
-        self.bpm_down_shortcut = QShortcut(QKeySequence(Qt.Key_Minus), self)
+        self.bpm_down_shortcut = QShortcut(QKeySequence("-"), self)
         self.bpm_down_shortcut.activated.connect(lambda: self.transport.adjust_bpm(-5))
 
         # Back to menu - Alt+Left
-        self.back_shortcut = QShortcut(QKeySequence(Qt.ALT | Qt.Key_Left), self)
+        self.back_shortcut = QShortcut(QKeySequence("Alt+Left"), self)
         self.back_shortcut.activated.connect(self.back_requested.emit)
 
     def cleanup(self):
