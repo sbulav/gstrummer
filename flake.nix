@@ -43,8 +43,10 @@
         runtimeInputs = [pythonEnv];
         text = ''
           cd ${./.}
-          # Prefer Wayland if доступно; откат на XCB
-          export QT_QPA_PLATFORM=${pkgs.lib.mkIf (pkgs.stdenv.isLinux) "wayland,xcb"}
+          ${pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            # Prefer Wayland if available; fallback to XCB
+            export QT_QPA_PLATFORM=wayland,xcb
+          ''}
           exec python app/main.py "$@"
         '';
       };
@@ -61,18 +63,21 @@
     in {
       # nix develop
       devShells.default = pkgs.mkShell {
-        buildInputs = [
-          pythonEnv
-          # System libs for runtime
-          pkgs.portaudio
-          pkgs.libsndfile
-          # Full Qt stack for PySide6 (plugins, platform backends)
-          pkgs.qt6.full
-          # Wayland platform plugin on Linux (optional but recommended)
-          pkgs.qt6.qtwayland
-          pkgs.pkg-config
-          pkgs.git
-        ];
+        buildInputs =
+          [
+            pythonEnv
+            # System libs for runtime
+            pkgs.portaudio
+            pkgs.libsndfile
+            # Full Qt stack for PySide6 (plugins, platform backends)
+            pkgs.qt6.full
+            pkgs.pkg-config
+            pkgs.git
+          ]
+          ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+            # Wayland platform plugin on Linux (optional but recommended)
+            pkgs.qt6.qtwayland
+          ];
 
         shellHook = ''
           echo "🔧 GStrummer dev shell activated"
@@ -82,7 +87,7 @@
           # Make sure local sources are importable if needed
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # Reduce glitches in some Pulse setups
-          export PULSE_LATENCY_MSEC=30
+          ${pkgs.lib.optionalString pkgs.stdenv.isLinux "export PULSE_LATENCY_MSEC=30"}
         '';
       };
 
