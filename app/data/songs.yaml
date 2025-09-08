@@ -4,7 +4,23 @@
   time_sig: [4,4]
   pattern_id: "quarters_down"
   progression: ["Am", "C", "Dm", "E"]
-  notes: "Четверти вниз, ровный ритм"
+  structure:
+    verse:
+      chords: ["Am", "C", "Dm", "E"]
+      pattern: "quarters_down"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "C", "Dm", "E"]
+      pattern: "quarters_down"
+      bars: 4
+      repeat: 2
+  all_chords: ["Am", "C", "Dm", "E"]
+  difficulty: "beginner"
+  notes: |
+    Простая последовательность аккордов с ровными четвертями вниз. 
+    Подходит для начинающих - все аккорды в первой позиции, 
+    ритм не требует сложной координации.
 
 - title: "Knockin' on Heaven's Door"
   artist: "Bob Dylan"
@@ -20,7 +36,23 @@
   time_sig: [4,4]
   pattern_id: "shestorka_mute"
   progression: ["Am", "F", "G", "Em"]
-  notes: "Шестерка с приглушкой"
+  structure:
+    verse:
+      chords: ["Am", "F", "G", "Em"]
+      pattern: "shestorka_mute"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "F", "G", "Em"]
+      pattern: "shestorka_mute"
+      bars: 4
+      repeat: 2
+  all_chords: ["Am", "F", "G", "Em"]
+  difficulty: "intermediate"
+  notes: |
+    Классическая шестерка с приглушкой после каждого удара.
+    Важно отработать технику глушения струн ладонью правой руки.
+    Аккорды простые, основная сложность - ритмический рисунок.
 
 - title: "Все идет по плану"
   artist: "Гражданская Оборона"
@@ -28,7 +60,23 @@
   time_sig: [4,4]
   pattern_id: "vosmerka_mute"
   progression: ["Am", "F", "G", "E"]
-  notes: "Восьмерка с глушением"
+  structure:
+    verse:
+      chords: ["Am", "F", "G", "E"]
+      pattern: "vosmerka_mute"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "F", "G", "E"]
+      pattern: "vosmerka_mute"
+      bars: 4
+      repeat: 2
+  all_chords: ["Am", "F", "G", "E"]
+  difficulty: "intermediate"
+  notes: |
+    Характерный для панк-рока рисунок восьмеркой с глушением.
+    Ритм должен быть агрессивным и четким. 
+    Обратите внимание на аккорд E - он отличается от привычного E мажора.
 
 - title: "Три белых коня"
   artist: "Сергей Никитин"
@@ -36,7 +84,23 @@
   time_sig: [3,4]
   pattern_id: "waltz_3_4"
   progression: ["Am", "Dm", "E", "Am"]
-  notes: "Классический вальсовый рисунок"
+  structure:
+    verse:
+      chords: ["Am", "Dm", "E", "Am"]
+      pattern: "waltz_3_4"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "Dm", "E", "Am"]
+      pattern: "waltz_3_4"
+      bars: 4
+      repeat: 2
+  all_chords: ["Am", "Dm", "E", "Am"]
+  difficulty: "beginner"
+  notes: |
+    Классический вальс в размере 3/4. 
+    Ритмический рисунок: сильная доля - вниз, две слабые - вверх.
+    Отличная песня для освоения вальсового размера.
 
 - title: "No Woman No Cry"
   artist: "Bob Marley"
@@ -60,7 +124,33 @@
   time_sig: [4,4]
   pattern_id: "rock_8"
   progression: ["Am", "F", "G", "C"]
-  notes: "Играть плотными восьмушками, акценты 2/4"
+  structure:
+    intro:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 1
+    verse:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Dm", "F", "G", "C"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "F", "G", "C", "Dm"]
+  difficulty: "beginner"
+  notes: |
+    Классический рок-н-ролльный рисунок восьмушками с акцентами на 2 и 4 доли.
+    В припеве вместо Am используется Dm. 
+    Важно сохранять плотный ритм и четкие акценты.
 
 - title: "Кукушка"
   artist: "Кино"
@@ -68,7 +158,33 @@
   time_sig: [4,4]
   pattern_id: "ddu_udu"
   progression: ["Am", "G", "Em", "Am"]
-  notes: "Балладный вариант; возможны вариации акцентов"
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "G", "Em", "Am"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 3
+    chorus:
+      chords: ["Am", "G", "Em", "Am"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    outro:
+      chords: ["Am"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+  all_chords: ["Am", "G", "Em"]
+  difficulty: "beginner"
+  notes: |
+    Балладный рисунок DDU UDU. В оригинале играется пальцами, но адаптирован для медиатора.
+    Можно варьировать акценты - сильнее выделять первый удар в каждой группе.
+    Темп медленный, идеально для отработки плавных переходов между аккордами.
 
 - title: "Что такое осень"
   artist: "ДДТ"
@@ -76,7 +192,33 @@
   time_sig: [4,4]
   pattern_id: "ddu_udu"
   progression: ["Am", "F", "G", "C"]
-  notes: "Мягкие апстримы, не торопиться"
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 3
+    chorus:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Dm", "F", "G", "C"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "F", "G", "C", "Dm"]
+  difficulty: "beginner"
+  notes: |
+    Мягкий балладный рисунок DDU UDU. Апстримы должны быть легкими и плавными.
+    В бридже используется Dm вместо Am для создания контраста.
+    Темп неспешный, важно сохранять расслабленное звучание.
 
 - title: "Оранжевое настроение"
   artist: "Чайф"
@@ -84,7 +226,33 @@
   time_sig: [4,4]
   pattern_id: "rock_8"
   progression: ["D", "A", "G", "D"]
-  notes: "Ритмичный рисунок с акцентами"
+  structure:
+    intro:
+      chords: ["D"]
+      pattern: "rock_8"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["D", "A", "G", "D"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["D", "A", "G", "D"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Em", "A", "G", "D"]
+      pattern: "rock_8"
+      bars: 4
+      repeat: 1
+  all_chords: ["D", "A", "G", "Em"]
+  difficulty: "intermediate"
+  notes: |
+    Энергичный рок-н-ролльный рисунок восьмушками. 
+    В бридже используется Em для создания гармонического разнообразия.
+    Акценты на 2 и 4 доли, ритм должен быть упругим и танцевальным.
 
 - title: "Владимирский централ"
   artist: "Михаил Круг"
@@ -92,7 +260,33 @@
   time_sig: [4,4]
   pattern_id: "sixteenth_drive"
   progression: ["Am", "Dm", "E", "Am"]
-  notes: "Энергичный бой с пропусками"
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "sixteenth_drive"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "Dm", "E", "Am"]
+      pattern: "sixteenth_drive"
+      bars: 4
+      repeat: 3
+    chorus:
+      chords: ["Am", "Dm", "E", "Am"]
+      pattern: "sixteenth_drive"
+      bars: 4
+      repeat: 2
+    outro:
+      chords: ["Am"]
+      pattern: "sixteenth_drive"
+      bars: 2
+      repeat: 1
+  all_chords: ["Am", "Dm", "E"]
+  difficulty: "intermediate"
+  notes: |
+    Энергичный бой с шестнадцатыми нотами и характерными пропусками ударов.
+    Характерный для русского шансона ритмический рисунок.
+    Важно сохранять драйв и четкость, несмотря на быстрый темп.
 
 - title: "Пачка сигарет"
   artist: "Кино"
@@ -100,7 +294,32 @@
   time_sig: [4,4]
   pattern_id: "shestorka"
   progression: ["Am", "G", "Dm", "Am"]
-  notes: "Исполняется классической шестеркой (6-ка)."
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "shestorka"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "G", "Dm", "Am"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "G", "Dm", "Am"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["C", "G", "Dm", "Am"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "G", "Dm", "C"]
+  difficulty: "beginner"
+  notes: |
+    Классическая шестерка (D DU UDU). В бридже добавляется аккорд C для гармонического разнообразия.
+    Ритм должен быть ровным и уверенным. Хорошая песня для отработки базового рисунка шестерки.
 
 - title: "Фантом"
   artist: "Чиж & Co"
@@ -108,7 +327,33 @@
   time_sig: [4,4]
   pattern_id: "shestorka"
   progression: ["Am", "G", "C", "F"]
-  notes: "Классическая шестерка, размеренный темп."
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "shestorka"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "G", "C", "F"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "G", "C", "F"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Dm", "G", "C", "F"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "G", "C", "F", "Dm"]
+  difficulty: "intermediate"
+  notes: |
+    Классическая шестерка в размеренном темпе. В бридже используется Dm вместо Am.
+    Обратите внимание на аккорд F - может потребовать баррэ для начинающих.
+    Ритм ровный, без резких акцентов.
 
 - title: "Поворот"
   artist: "Машина времени"
@@ -116,7 +361,33 @@
   time_sig: [4,4]
   pattern_id: "shestorka"
   progression: ["Am", "D", "G", "C", "Am", "E"]
-  notes: "Шестерка в стиле 70-х."
+  structure:
+    intro:
+      chords: ["Am", "D", "G", "C"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 1
+    verse:
+      chords: ["Am", "D", "G", "C"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "D", "G", "C", "Am", "E"]
+      pattern: "shestorka"
+      bars: 6
+      repeat: 2
+    bridge:
+      chords: ["Am", "D", "G", "C"]
+      pattern: "shestorka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "D", "G", "C", "E"]
+  difficulty: "intermediate"
+  notes: |
+    Классическая шестерка в стиле 70-х. В припеве расширенная прогрессия с аккордом E.
+    Характерный для Макаревича гармонический ход. 
+    Темп достаточно быстрый, требует хорошей координации.
 
 - title: "Выхода нет"
   artist: "Сплин"
@@ -124,7 +395,33 @@
   time_sig: [4,4]
   pattern_id: "vosmerka"
   progression: ["Em", "G", "D", "C"]
-  notes: "Ритм восьмеркой; стандартный бой."
+  structure:
+    intro:
+      chords: ["Em"]
+      pattern: "vosmerka"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Em", "G", "D", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Em", "G", "D", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Am", "G", "D", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Em", "G", "D", "C", "Am"]
+  difficulty: "beginner"
+  notes: |
+    Стандартный бой восьмеркой. В бридже используется Am вместо Em.
+    Простая последовательность аккордов, подходит для начинающих.
+    Ритм ровный, без сложных акцентов.
 
 - title: "Мой рок-н-ролл"
   artist: "Би-2"
@@ -132,7 +429,33 @@
   time_sig: [4,4]
   pattern_id: "vosmerka"
   progression: ["Am", "C", "G", "D"]
-  notes: "Используется классическая восьмерка."
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "vosmerka"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "C", "G", "D"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "C", "G", "D"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["F", "C", "G", "D"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "C", "G", "D", "F"]
+  difficulty: "intermediate"
+  notes: |
+    Классическая восьмерка. В бридже используется F вместо Am.
+    Обратите внимание на аккорд F - может потребовать баррэ.
+    Темп умеренный, ритм ровный с легкими акцентами.
 
 - title: "Гудбай, Америка"
   artist: "Наутилус Помпилиус"
@@ -140,7 +463,33 @@
   time_sig: [4,4]
   pattern_id: "vosmerka"
   progression: ["Am", "F", "G", "C"]
-  notes: "Восьмерка, балладный темп."
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "vosmerka"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "F", "G", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Dm", "F", "G", "C"]
+      pattern: "vosmerka"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "F", "G", "C", "Dm"]
+  difficulty: "beginner"
+  notes: |
+    Балладная восьмерка. В бридже используется Dm вместо Am.
+    Простая последовательность аккордов, подходит для начинающих.
+    Темп неспешный, ритм ровный и расслабленный.
 
 - title: "Сансара"
   artist: "Баста"
@@ -148,7 +497,33 @@
   time_sig: [4,4]
   pattern_id: "ddu_udu"
   progression: ["Am", "F", "C", "G"]
-  notes: "Баллада с рисунком DDU UDU"
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "F", "C", "G"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "F", "C", "G"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Dm", "F", "C", "G"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "F", "C", "G", "Dm"]
+  difficulty: "intermediate"
+  notes: |
+    Балладный рисунок DDU UDU. В бридже используется Dm вместо Am.
+    Обратите внимание на нестандартную последовательность аккордов.
+    Ритм плавный, с акцентом на мелодичность.
 
 - title: "Медлячок"
   artist: "Валентин Стрыкало"
@@ -156,14 +531,66 @@
   time_sig: [4,4]
   pattern_id: "ddu_udu"
   progression: ["Am", "C", "G", "F"]
-  notes: "Медленный бой DDU UDU"
+  structure:
+    intro:
+      chords: ["Am"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Am", "C", "G", "F"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Am", "C", "G", "F"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Dm", "C", "G", "F"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 1
+  all_chords: ["Am", "C", "G", "F", "Dm"]
+  difficulty: "intermediate"
+  notes: |
+    Медленный бой DDU UDU. В бридже используется Dm вместо Am.
+    Обратите внимание на аккорд F - может потребовать баррэ.
+    Темп очень медленный, идеально для отработки чистого звукоизвлечения.
 - title: "Выпускной"
   artist: "Баста"
   bpm: 88
   time_sig: [4,4]
   pattern_id: "ddu_udu"
   progression: ["Em", "C", "G", "D"]
-  notes: "Баллада с рисунком DDU UDU"
+  structure:
+    intro:
+      chords: ["Em"]
+      pattern: "ddu_udu"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["Em", "C", "G", "D"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    chorus:
+      chords: ["Em", "C", "G", "D"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 2
+    bridge:
+      chords: ["Am", "C", "G", "D"]
+      pattern: "ddu_udu"
+      bars: 4
+      repeat: 1
+  all_chords: ["Em", "C", "G", "D", "Am"]
+  difficulty: "intermediate"
+  notes: |
+    Балладный рисунок DDU UDU. В бридже используется Am вместо Em.
+    Обратите внимание на минорную тональность (Em вместо Am).
+    Ритм плавный, с акцентом на лирическое звучание.
 
 
 # Extended format examples with verse/chorus structure
