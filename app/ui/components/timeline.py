@@ -10,7 +10,7 @@ from PySide6.QtGui import (
     QPen,
     QPolygon,
 )
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QToolTip
 
 
 class TimelineWidget(QWidget):
@@ -57,6 +57,14 @@ class TimelineWidget(QWidget):
         self.accent_color = QColor(255, 200, 50)
         self.beat_color = QColor(100, 100, 120)
 
+        # Accuracy visualization
+        self.step_accuracy: dict[int, float] = {}
+        self.good_threshold = 30  # ms
+        self.ok_threshold = 75  # ms
+
+        # Enable mouse tracking for hover tooltips
+        self.setMouseTracking(True)
+
         # Font
         self.font = QFont("Arial", 10, QFont.Bold)
 
@@ -67,6 +75,7 @@ class TimelineWidget(QWidget):
             self.steps_per_bar = pattern.steps_per_bar
             self.time_signature = pattern.time_sig
             self.update_geometry()
+            self.step_accuracy.clear()
         self.update()
 
     def set_bpm(self, bpm: int) -> None:
@@ -81,6 +90,16 @@ class TimelineWidget(QWidget):
             self.last_step_time = monotonic()
             self.animate_step_hit()
             self.update()
+
+    def set_step_accuracy(self, step: int, deviation_ms: float) -> None:
+        """Store accuracy information for a step."""
+        self.step_accuracy[step % self.steps_per_bar] = deviation_ms
+        self.update()
+
+    def clear_accuracy(self) -> None:
+        """Clear stored accuracy data."""
+        self.step_accuracy.clear()
+        self.update()
 
     def animate_step_hit(self):
         """Animate the current step highlight."""
@@ -148,7 +167,7 @@ class TimelineWidget(QWidget):
             step_x = start_x + i * self.step_width
             step = self.pattern.steps[i] if i < len(self.pattern.steps) else None
             is_current = i == self.current_step % self.steps_per_bar
-            self.draw_step(painter, step_x, center_y, step, is_current)
+            self.draw_step(painter, step_x, center_y, step, is_current, i)
 
         # Draw progress indicator below the fretboard with countdown
         beats_per_bar = self.time_signature[0]
@@ -201,18 +220,30 @@ class TimelineWidget(QWidget):
                 line_x = int(start_x + step * self.step_width)
                 painter.drawLine(line_x, int(y + 15), line_x, int(y + 35))
 
-    def draw_step(self, painter, x, y, step, is_current):
+    def draw_step(self, painter, x, y, step, is_current, index):
         """Draw a single step (arrow or rest)."""
         if not step:
             return
 
-        # Set colors and scale based on current step
-        if is_current:
-            scale = self.highlight_scale
-            pen_color = QColor(self.current_color)
+        # Set colors and scale based on current step and accuracy
+        deviation = self.step_accuracy.get(index)
+
+        scale = self.highlight_scale if is_current else 1.0
+
+        if deviation is not None:
+            abs_dev = abs(deviation)
+            if abs_dev <= self.good_threshold:
+                pen_color = QColor(50, 200, 100)
+            elif abs_dev <= self.ok_threshold:
+                pen_color = QColor(255, 215, 0)
+            else:
+                pen_color = QColor(200, 60, 60)
         else:
-            scale = 1.0
-            pen_color = self.accent_color if step.accent > 0.5 else self.step_color
+            pen_color = (
+                QColor(self.current_color)
+                if is_current
+                else self.accent_color if step.accent > 0.5 else self.step_color
+            )
 
         # Calculate arrow size with scale but keep it compact within the grid
         arrow_size = int(self.step_height * 0.6 * scale)
@@ -369,3 +400,27 @@ class TimelineWidget(QWidget):
         for i in range(self.steps_per_bar + 1):
             x = int(start_x + i * self.step_width)
             painter.drawLine(x, top, x, bottom)
+
+    def mouseMoveEvent(self, event):
+        """Show deviation tooltip when hovering over steps."""
+        if not self.pattern:
+            return
+
+        step_index = int((event.position().x() - self.margin) / self.step_width)
+        if 0 <= step_index < self.steps_per_bar:
+            deviation = self.step_accuracy.get(step_index)
+            if deviation is not None:
+                QToolTip.showText(
+                    event.globalPosition().toPoint(),
+                    f"{deviation:+.0f} ms",
+                    self,
+                )
+            else:
+                QToolTip.hideText()
+        else:
+            QToolTip.hideText()
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):  # type: ignore[override]
+        QToolTip.hideText()
+        super().leaveEvent(event)
