@@ -30,8 +30,8 @@ class StepsPreviewWidget(QWidget):
         self.animation_timer.start(50)  # Update every 50ms
 
         # Visual properties
-        self.main_arrow_size = 120  # Large arrow for next action
-        self.small_arrow_size = 60  # Small arrow for action+1
+        self.main_arrow_size = 100  # Large arrow for next action (reduced for better centering)
+        self.small_arrow_size = 50  # Small arrow for action+1 (reduced for top corner)
         self.vertical_spacing = 100
 
         # Colors
@@ -115,28 +115,31 @@ class StepsPreviewWidget(QWidget):
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Выберите ритм")
             return
 
-        # Title
+        # Title in top left
         painter.setPen(QPen(self.text_color, 2))
-        painter.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-        painter.drawText(10, 25, "Удар:")
+        painter.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        painter.drawText(10, 20, "Удар:")
 
         # Draw upcoming steps
         upcoming_steps = self.get_upcoming_steps()
 
         # Center positions
         center_x = self.width() // 2
-        main_y = self.height() // 2 - 20  # Main arrow position
-        small_y = main_y + self.vertical_spacing  # Small arrow position below
+        main_y = self.height() // 2  # Main arrow position (centered)
+        
+        # Small arrow position - right top corner
+        small_x = self.width() - 60  # 60px from right edge
+        small_y = 60  # 60px from top
 
         # Draw main next step (big arrow)
         if len(upcoming_steps) > 0 and upcoming_steps[0][1]:
             step = upcoming_steps[0][1]
             self.draw_main_step(painter, center_x, main_y, step)
 
-        # Draw action+1 (small arrow below)
+        # Draw action+1 (small arrow in top right)
         if len(upcoming_steps) > 1 and upcoming_steps[1][1]:
             step = upcoming_steps[1][1]
-            self.draw_small_step(painter, center_x, small_y, step)
+            self.draw_small_step(painter, small_x, small_y, step)
 
     def draw_main_step(self, painter, x, y, step):
         """Draw the main (next) step with large arrow in center."""
@@ -171,11 +174,7 @@ class StepsPreviewWidget(QWidget):
 
 
 
-        # Position for technique cue (accent indication handled by color/size)
-        cue_y = y + arrow_size // 2 + 25
 
-        # Draw technique cue (icon or text) below the arrow
-        self.draw_technique_cue(painter, x, cue_y, step.technique, position="below")
 
     def draw_small_step(self, painter, x, y, step):
         """Draw the action+1 step with smaller arrow below."""
@@ -202,15 +201,12 @@ class StepsPreviewWidget(QWidget):
         elif step.dir == "-":
             self.draw_large_rest(painter, x, y, arrow_size)
 
-        # Draw "затем" label above small arrow
+        # Draw "затем" label above small arrow in top right corner
         painter.setFont(QFont("Arial", 10))
         painter.setPen(QPen(color, 1))
-        painter.drawText(x - 15, y - arrow_size // 2 - 5, "затем")
+        painter.drawText(x - 15, y - arrow_size // 2 - 15, "затем")
 
-        # Draw technique cue to the right of the arrow
-        self.draw_technique_cue(
-            painter, x + arrow_size // 2 + 10, y, step.technique, position="right"
-        )
+
 
     def draw_technique_cue(
         self, painter, x, y, technique: str, position: str = "below"
