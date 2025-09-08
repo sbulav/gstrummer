@@ -1,4 +1,4 @@
-from PySide6.QtCore import QPoint, QEasingCurve, QPropertyAnimation, QRect, Qt, Signal
+from PySide6.QtCore import QPoint, QEasingCurve, QRect, Qt, Signal, QTimer
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -36,14 +36,10 @@ class TimelineWidget(QWidget):
         # Animation properties
         self._highlight_scale = 1.0
 
-        # Animation objects
-        self.highlight_animation = QPropertyAnimation(self, b"highlight_scale")
-        self.highlight_animation.setDuration(150)
-        self.highlight_animation.setEasingCurve(QEasingCurve.OutBack)
-        if not self.highlight_animation.finished.isSignalConnected(
-            self.reset_highlight_scale
-        ):
-            self.highlight_animation.finished.connect(self.reset_highlight_scale)
+        # Animation timer
+        self.animation_timer = QTimer()
+        self.animation_timer.setSingleShot(True)
+        self.animation_timer.timeout.connect(self.reset_highlight_scale)
 
         # Colors
         self.bg_color = QColor(240, 240, 245)
@@ -74,9 +70,9 @@ class TimelineWidget(QWidget):
     def animate_step_hit(self):
         """Animate the current step highlight."""
         # Scale animation
-        self.highlight_animation.setStartValue(1.0)
-        self.highlight_animation.setEndValue(1.15)
-        self.highlight_animation.start()
+        self.highlight_scale = 1.15
+        self.update()
+        self.animation_timer.start(150)
 
     def reset_highlight_scale(self):
         """Reset highlight scale after animation."""
@@ -91,6 +87,8 @@ class TimelineWidget(QWidget):
         self.update()
 
     highlight_scale = property(get_highlight_scale, set_highlight_scale)
+
+
 
     def update_geometry(self):
         """Update widget geometry based on pattern."""
