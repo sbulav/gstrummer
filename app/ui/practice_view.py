@@ -146,6 +146,7 @@ class PracticeView(QWidget):
             # Update UI components
             self.pattern_title.setText(pattern.name)
             self.timeline.set_pattern(pattern)
+            self.timeline.set_bpm(pattern.bpm_default)
             self.steps_preview.set_pattern(pattern)
 
             # Update transport controls
@@ -209,6 +210,7 @@ class PracticeView(QWidget):
     def on_bpm_changed(self, bpm: int):
         """Handle BPM change from transport controls."""
         self.metronome.set_bpm(bpm)
+        self.timeline.set_bpm(bpm)
 
     def on_pattern_changed(self, pattern_id: str):
         """Handle pattern change from transport controls."""
@@ -222,6 +224,7 @@ class PracticeView(QWidget):
             # Update UI components with new pattern
             self.pattern_title.setText(new_pattern.name)
             self.timeline.set_pattern(new_pattern)
+            self.timeline.set_bpm(new_pattern.bpm_default)
             self.steps_preview.set_pattern(new_pattern)
 
             # Update pattern info display
@@ -230,6 +233,7 @@ class PracticeView(QWidget):
             # Configure metronome for the new pattern
             beats_per_bar = new_pattern.time_sig[0]
             self.metronome.steps_per_beat = new_pattern.steps_per_bar // beats_per_bar
+            self.metronome.set_bpm(new_pattern.bpm_default)
 
             # Reset timeline position when pattern changes
             self.timeline.set_current_step(0)

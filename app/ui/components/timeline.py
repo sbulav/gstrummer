@@ -1,4 +1,6 @@
-from PySide6.QtCore import QPoint, QEasingCurve, QRect, Qt, Signal, QTimer
+from time import monotonic
+
+from PySide6.QtCore import QPoint, QRect, Qt, Signal, QTimer
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -41,6 +43,13 @@ class TimelineWidget(QWidget):
         self.animation_timer.setSingleShot(True)
         self.animation_timer.timeout.connect(self.reset_highlight_scale)
 
+        # Timing
+        self.bpm = 120
+        self.last_step_time = None
+        self.countdown_timer = QTimer(self)
+        self.countdown_timer.timeout.connect(self.update)
+        self.countdown_timer.start(50)
+
         # Colors
         self.bg_color = QColor(240, 240, 245)
         self.step_color = QColor(60, 60, 80)
@@ -60,10 +69,16 @@ class TimelineWidget(QWidget):
             self.update_geometry()
         self.update()
 
+    def set_bpm(self, bpm: int) -> None:
+        """Set current tempo for countdown calculations."""
+        self.bpm = bpm
+        self.update()
+
     def set_current_step(self, step: int):
         """Update the current step position with animation."""
         if self.current_step != step:
             self.current_step = step
+            self.last_step_time = monotonic()
             self.animate_step_hit()
             self.update()
 
@@ -87,8 +102,6 @@ class TimelineWidget(QWidget):
         self.update()
 
     highlight_scale = property(get_highlight_scale, set_highlight_scale)
-
-
 
     def update_geometry(self):
         """Update widget geometry based on pattern."""
@@ -137,23 +150,56 @@ class TimelineWidget(QWidget):
             is_current = i == self.current_step % self.steps_per_bar
             self.draw_step(painter, step_x, center_y, step, is_current)
 
-        # Draw progress indicator below the fretboard
-        self.draw_progress(painter, start_x, int(start_y + bar_height + 10))
+        # Draw progress indicator below the fretboard with countdown
+        beats_per_bar = self.time_signature[0]
+        steps_per_beat = self.steps_per_bar / beats_per_bar
+        step_ms = 60000 / self.bpm / steps_per_beat if self.bpm else 0
+        if self.last_step_time is None:
+            ms_until_next = step_ms
+        else:
+            elapsed = (monotonic() - self.last_step_time) * 1000
+            ms_until_next = max(0, step_ms - elapsed)
+
+        self.draw_progress(
+            painter, start_x, int(start_y + bar_height + 10), ms_until_next
+        )
 
     def draw_beat_markers(self, painter, start_x, y):
-        """Draw beat number markers."""
-        painter.setPen(QPen(self.beat_color, 2))
-        painter.setFont(QFont("Arial", 12, QFont.Bold))
-
+        """Draw beat numbers with subdivision labels."""
         beats_per_bar = self.time_signature[0]
         steps_per_beat = self.steps_per_bar // beats_per_bar
 
-        for beat in range(beats_per_bar):
-            beat_x = int(start_x + beat * steps_per_beat * self.step_width)
-            painter.drawText(beat_x - 10, int(y), 20, 20, Qt.AlignCenter, str(beat + 1))
+        beat_font = QFont("Arial", 12, QFont.Bold)
+        sub_font = QFont("Arial", 10)
+        painter.setPen(QPen(self.beat_color, 2))
 
-            # Draw beat line
-            painter.drawLine(beat_x, int(y + 15), beat_x, int(y + 35))
+        # Template for common subdivision syllables
+        subdivision_templates = {
+            1: ["1"],
+            2: ["1", "&"],
+            3: ["1", "&", "a"],
+            4: ["1", "e", "&", "a"],
+        }
+        template = subdivision_templates.get(
+            steps_per_beat, [str(i + 1) for i in range(steps_per_beat)]
+        )
+
+        for step in range(self.steps_per_bar):
+            beat = step // steps_per_beat
+            sub = step % steps_per_beat
+            label = template[sub]
+            if sub == 0:
+                label = str(beat + 1)
+                painter.setFont(beat_font)
+            else:
+                painter.setFont(sub_font)
+
+            text_x = int(start_x + (step + 0.5) * self.step_width)
+            painter.drawText(text_x - 10, int(y), 20, 20, Qt.AlignCenter, label)
+
+            if sub == 0:
+                line_x = int(start_x + step * self.step_width)
+                painter.drawLine(line_x, int(y + 15), line_x, int(y + 35))
 
     def draw_step(self, painter, x, y, step, is_current):
         """Draw a single step (arrow or rest)."""
@@ -241,8 +287,8 @@ class TimelineWidget(QWidget):
         painter.drawRoundedRect(rest_rect, 2, 2)
         painter.restore()
 
-    def draw_progress(self, painter, start_x, y):
-        """Draw progress bar showing position in the bar."""
+    def draw_progress(self, painter, start_x, y, ms_until_next):
+        """Draw progress bar showing position in the bar with countdown."""
         if not self.pattern:
             return
 
@@ -266,6 +312,15 @@ class TimelineWidget(QWidget):
         indicator_x = int(start_x + progress_width)
         painter.setPen(QPen(self.current_color, 3))
         painter.drawLine(indicator_x, int(y - 5), indicator_x, int(y + 15))
+
+        # Countdown text
+        painter.setFont(QFont("Arial", 8))
+        painter.setPen(QPen(self.current_color))
+        painter.drawText(
+            indicator_x + 5,
+            int(y + 25),
+            f"{int(ms_until_next)} ms",
+        )
 
     def set_show_grid(self, show: bool) -> None:
         """Toggle visibility of the grid overlay."""
