@@ -109,51 +109,59 @@ class PracticeView(QWidget):
         # Chord progression display - Split into two widgets
         progression_group = QGroupBox("Прогрессия аккордов")
         progression_main_layout = QHBoxLayout(progression_group)
-        
-        # Left widget - Button container
+
+        # Left widget - Song name + Next progression button (grouped horizontally)
         button_container = QWidget()
-        button_layout = QVBoxLayout(button_container)
+        button_layout = QHBoxLayout(button_container)
         button_layout.setContentsMargins(5, 10, 5, 10)
-        
+
+        # Song title (to the LEFT of the button)
+        self.song_title_label = QLabel("Песня не выбрана")
+        self.song_title_label.setAlignment(
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
+        )
+        self.song_title_label.setStyleSheet(
+            "font-size: 11px; font-weight: 600; margin-right: 8px;"
+        )
+
         # Next progression button
         self.next_progression_button = QPushButton("Следующая\nпрогрессия")
-        self.next_progression_button.setMaximumWidth(100)
+        self.next_progression_button.setMaximumWidth(120)
         self.next_progression_button.setMinimumHeight(60)
         self.next_progression_button.setStyleSheet("""
-            QPushButton {
-                font-size: 10px;
-                padding: 5px;
-                background-color: #e0e0e0;
-                border: 1px solid #cccccc;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #d0d0d0;
-            }
+            QPushButton { font-size: 10px; padding: 5px;
+                        background-color: #e0e0e0; border: 1px solid #cccccc; border-radius: 5px; }
+            QPushButton:hover { background-color: #d0d0d0; }
         """)
-        button_layout.addWidget(self.next_progression_button, 0, Qt.AlignmentFlag.AlignCenter)
-        button_layout.addStretch()
-        
+
+        button_layout.addWidget(self.song_title_label, 1)
+        button_layout.addWidget(
+            self.next_progression_button, 0, Qt.AlignmentFlag.AlignRight
+        )
+
         # Right widget - Chord display container
         chord_container = QWidget()
         chord_layout = QVBoxLayout(chord_container)
         chord_layout.setContentsMargins(10, 5, 10, 5)
-        
-        # Song info label
-        self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
-        self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
-        chord_layout.addWidget(self.song_info_label)
-        
+
+        # # Song info label
+        # self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
+        # self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
+        # chord_layout.addWidget(self.song_info_label)
+
+        # NOTE: No text above the chord container per requirement
+
         # Custom widget for chord progression display
         self.chord_display_widget = QWidget()
         self.chord_display_widget.setMinimumHeight(120)
-        chord_layout.addWidget(self.chord_display_widget)
-        
+        chord_layout.addWidget(self.chord_display_widget, 0, Qt.AlignmentFlag.AlignTop)
+        chord_layout.addStretch(1)  # Push content up, leave flexible space below
+
         # Add both containers to main layout
         progression_main_layout.addWidget(button_container)
         progression_main_layout.addWidget(chord_container)
-        
+
         # Set stretch factors: 1 for button, 3 for chords (25%/75% split)
         progression_main_layout.setStretchFactor(button_container, 1)
         progression_main_layout.setStretchFactor(chord_container, 3)
@@ -167,7 +175,7 @@ class PracticeView(QWidget):
         splitter.setStretchFactor(1, 1)  # Controls get 1/4 of space
 
         layout.addWidget(splitter)
-        
+
         # Override paint event for chord display widget
         self.chord_display_widget.paintEvent = self.chord_display_paint_event
 
@@ -189,7 +197,7 @@ class PracticeView(QWidget):
         # Audio control connections (now through audio status bar)
         self.transport.volume_changed.connect(self.on_volume_changed)
         self.transport.enabled_changed.connect(self.on_enabled_changed)
-        
+
         # Chord progression connections
         self.next_progression_button.clicked.connect(self.update_chord_progression)
 
@@ -237,15 +245,15 @@ class PracticeView(QWidget):
             self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
             self.metronome.set_bpm(pattern.bpm_default)
 
-
     def set_patterns(self, patterns):
         """Set available patterns for selection."""
         self.patterns = patterns
         self.transport.set_patterns(patterns)
-        
+
         # Load songs for chord progression suggestions
         try:
             from app.core.patterns import load_songs
+
             self.songs = load_songs("app/data/songs.yaml")
         except Exception as e:
             print(f"Error loading songs for chord progressions: {e}")
@@ -254,85 +262,102 @@ class PracticeView(QWidget):
     def update_chord_progression(self):
         """Update chord progression display based on current pattern."""
         if not self.current_pattern:
-            self.song_info_label.setText("Выберите ритм для отображения прогрессии")
+            self.song_title_label.setText("Выберите ритм для отображения прогрессии")
             self.current_progression = []
             self.current_chord_index = 0
             self.chord_display_widget.update()
             return
 
         # Find songs that use this pattern
-        matching_songs = [song for song in self.songs if song.pattern_id == self.current_pattern.id]
-        
+        matching_songs = [
+            song for song in self.songs if song.pattern_id == self.current_pattern.id
+        ]
+
         if matching_songs:
             # Randomly select a song
             import random
+
             selected_song = random.choice(matching_songs)
-            
+
             # Use the progression from the song
             self.current_progression = selected_song.progression
             self.current_chord_index = 0
-            
+
             # Update song info
-            self.song_info_label.setText(f"{selected_song.title} - {selected_song.artist}")
+            self.song_title_label.setText(
+                f"{selected_song.title} - {selected_song.artist}"
+            )
         else:
             # No songs found for this pattern
             self.current_progression = []
-            self.song_info_label.setText("Нет песен для этого ритма")
-        
+            self.song_title_label.setText("Нет песен для этого ритма")
+
         self.chord_display_widget.update()
 
     def advance_chord(self):
         """Advance to next chord in progression."""
         if self.current_progression:
-            self.current_chord_index = (self.current_chord_index + 1) % len(self.current_progression)
+            self.current_chord_index = (self.current_chord_index + 1) % len(
+                self.current_progression
+            )
             self.chord_display_widget.update()
 
     def paint_chord_progression(self, painter):
         """Paint chord progression on the display widget."""
         if not self.current_progression:
             return
-            
+
         # Visual properties
         chord_width = 80
         chord_height = 60
         chord_spacing = 10
         highlight_color = QColor(100, 200, 100, 200)  # Green highlight
-        normal_color = QColor(200, 200, 200, 150)    # Gray normal
+        normal_color = QColor(200, 200, 200, 150)  # Gray normal
         text_color = QColor(50, 50, 50)
         border_color = QColor(100, 100, 100)
-        
+
         # Calculate positions
-        total_width = len(self.current_progression) * (chord_width + chord_spacing) - chord_spacing
+        total_width = (
+            len(self.current_progression) * (chord_width + chord_spacing)
+            - chord_spacing
+        )
         start_x = (self.chord_display_widget.width() - total_width) // 2
         y = 20
-        
+
         # Draw chord boxes
         for i, chord in enumerate(self.current_progression):
             x = start_x + i * (chord_width + chord_spacing)
-            
+
             # Choose color based on current position
             if i == self.current_chord_index:
                 painter.setBrush(QBrush(highlight_color))
             else:
                 painter.setBrush(QBrush(normal_color))
-                
+
             # Draw chord box
             painter.setPen(QPen(border_color, 2))
             painter.drawRoundedRect(x, y, chord_width, chord_height, 8, 8)
-            
+
             # Draw chord name
             painter.setPen(QPen(text_color))
             painter.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-            painter.drawText(x, y, chord_width, chord_height, 
-                           Qt.AlignmentFlag.AlignCenter, chord)
-        
+            painter.drawText(
+                x, y, chord_width, chord_height, Qt.AlignmentFlag.AlignCenter, chord
+            )
+
         # Draw progression indicator (1, 2, 3, 4...)
         painter.setFont(QFont("Arial", 10))
         painter.setPen(QPen(text_color))
         for i in range(len(self.current_progression)):
             x = start_x + i * (chord_width + chord_spacing) + chord_width // 2
-            painter.drawText(x - 10, y + chord_height + 15, 20, 15, 
-                           Qt.AlignmentFlag.AlignCenter, str(i + 1))
+            painter.drawText(
+                x - 10,
+                y + chord_height + 15,
+                20,
+                15,
+                Qt.AlignmentFlag.AlignCenter,
+                str(i + 1),
+            )
 
     def start_practice(self):
         """Start practice session."""
@@ -431,7 +456,7 @@ class PracticeView(QWidget):
         result = self.evaluator.add_step(step_index, timestamp)
         if result:
             self.timeline.set_step_accuracy(result.step_index, result.deviation_ms)
-        
+
         # Advance chord progression on bar boundaries
         if step_index % self.current_pattern.steps_per_bar == 0:
             self.advance_chord()
