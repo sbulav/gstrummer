@@ -40,6 +40,10 @@ class TimelineWidget(QWidget):
         self.highlight_animation = QPropertyAnimation(self, b"highlight_scale")
         self.highlight_animation.setDuration(150)
         self.highlight_animation.setEasingCurve(QEasingCurve.OutBack)
+        if not self.highlight_animation.finished.isSignalConnected(
+            self.reset_highlight_scale
+        ):
+            self.highlight_animation.finished.connect(self.reset_highlight_scale)
 
         # Colors
         self.bg_color = QColor(240, 240, 245)
@@ -72,7 +76,6 @@ class TimelineWidget(QWidget):
         # Scale animation
         self.highlight_animation.setStartValue(1.0)
         self.highlight_animation.setEndValue(1.15)
-        self.highlight_animation.finished.connect(self.reset_highlight_scale)
         self.highlight_animation.start()
 
     def reset_highlight_scale(self):
