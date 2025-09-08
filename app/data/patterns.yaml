@@ -41,10 +41,10 @@
   steps:
     - {t: 0.0,   dir: D, accent: 1.0}
     - {t: 0.125, dir: U}
-    - {t: 0.25,  dir: D}
-    - {t: 0.375, dir: D, accent: 0.8}
+    - {t: 0.25,  dir: D, accent: 0.7}
+    - {t: 0.375, dir: D}
     - {t: 0.5,   dir: U}
-    - {t: 0.625, dir: D}
+    - {t: 0.625, dir: D, accent: 0.7}
     - {t: 0.75,  dir: -}
     - {t: 0.875, dir: -}
 
@@ -88,7 +88,7 @@
     - {t: 0.625,  dir: -}
     - {t: 0.6875, dir: D}
     - {t: 0.75,   dir: -}
-    - {t: 0.8125, dir: U}
+    - {t: 0.8125, dir: U, accent: 1.0}
     - {t: 0.875,  dir: -}
     - {t: 0.9375, dir: -}
 
@@ -110,7 +110,7 @@
     - {t: 0.375,  dir: U}
     - {t: 0.4375, dir: U}
     - {t: 0.5,    dir: -}
-    - {t: 0.5625, dir: D}
+    - {t: 0.5625, dir: D, accent: 1.0}
     - {t: 0.625,  dir: -}
     - {t: 0.6875, dir: D}
     - {t: 0.75,   dir: -}
@@ -127,11 +127,11 @@
   bpm_max: 140
   notes: "Чередование D/U, акценты на 2 и 4"
   steps:
-    - {t: 0.0, dir: D, accent: 0.7}
+    - {t: 0.0, dir: D}
     - {t: 0.125, dir: U}
     - {t: 0.25, dir: D, accent: 1.0}
     - {t: 0.375, dir: U}
-    - {t: 0.5, dir: D, accent: 0.7}
+    - {t: 0.5, dir: D}
     - {t: 0.625, dir: U}
     - {t: 0.75, dir: D, accent: 1.0}
     - {t: 0.875, dir: U}
