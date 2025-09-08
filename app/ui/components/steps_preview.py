@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor, QPixmap
+from PySide6.QtCore import Qt, QTimer, QPoint, QRect
+from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor, QPixmap, QPolygon
 from typing import Optional
+from time import monotonic
 
 from app.ui.icons import get_technique_icon
 
@@ -17,6 +18,16 @@ class StepsPreviewWidget(QWidget):
         self.pattern = None
         self.current_step = 0
         self.preview_count = 2  # Show next 2 steps (current + next)
+        
+        # Timing for fill animation
+        self.bpm = 120
+        self.last_step_time = None
+        self.fill_progress = 0.0  # 0.0 to 1.0, progress until next beat
+        
+        # Animation timer
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self.update_fill_progress)
+        self.animation_timer.start(50)  # Update every 50ms
 
         # Visual properties
         self.main_arrow_size = 120  # Large arrow for next action
@@ -29,6 +40,7 @@ class StepsPreviewWidget(QWidget):
         self.upcoming_color = QColor(150, 150, 170)  # Gray for upcoming
         self.accent_color = QColor(255, 150, 50)  # Orange for accents
         self.text_color = QColor(50, 50, 70)
+        self.fill_color = QColor(150, 255, 150, 80)  # Light green with transparency
 
     def set_pattern(self, pattern):
         """Set the strumming pattern."""
@@ -39,7 +51,31 @@ class StepsPreviewWidget(QWidget):
         """Update current step position."""
         if self.current_step != step:
             self.current_step = step
+            self.last_step_time = monotonic()
             self.update()
+    
+    def set_bpm(self, bpm: int):
+        """Set current BPM for timing calculations."""
+        self.bpm = bpm
+        
+    def update_fill_progress(self):
+        """Update fill progress based on elapsed time since last step."""
+        if not self.pattern or not self.last_step_time:
+            self.fill_progress = 0.0
+            return
+            
+        # Calculate time per step
+        beats_per_bar = 4  # Assume 4/4 for now
+        steps_per_beat = self.pattern.steps_per_bar / beats_per_bar
+        step_duration = 60.0 / self.bpm / steps_per_beat if self.bpm else 0
+        
+        elapsed = monotonic() - self.last_step_time
+        if step_duration > 0:
+            self.fill_progress = min(1.0, elapsed / step_duration)
+        else:
+            self.fill_progress = 0.0
+        
+        self.update()
 
     def get_upcoming_steps(self):
         """Get list of upcoming steps to display."""
@@ -65,6 +101,13 @@ class StepsPreviewWidget(QWidget):
 
         # Background
         painter.fillRect(self.rect(), self.bg_color)
+        
+        # Draw animated fill (light green progress)
+        if self.pattern and self.fill_progress > 0:
+            fill_height = int(self.height() * self.fill_progress)
+            fill_rect = painter.window()
+            fill_rect.setTop(self.height() - fill_height)
+            painter.fillRect(fill_rect, self.fill_color)
 
         if not self.pattern:
             painter.setPen(self.upcoming_color)
@@ -75,7 +118,7 @@ class StepsPreviewWidget(QWidget):
         # Title
         painter.setPen(QPen(self.text_color, 2))
         painter.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-        painter.drawText(10, 25, "Следующий удар:")
+        painter.drawText(10, 25, "Удар:")
 
         # Draw upcoming steps
         upcoming_steps = self.get_upcoming_steps()
@@ -126,17 +169,10 @@ class StepsPreviewWidget(QWidget):
         elif step.dir == "-":
             self.draw_large_rest(painter, x, y, arrow_size)
 
-        # Draw "СЛЕДУЮЩИЙ" label above
-        painter.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        painter.setPen(QPen(color, 2))
-        painter.drawText(x - 40, y - arrow_size // 2 - 15, "СЛЕДУЮЩИЙ")
 
-        # Draw accent indicator if needed
+
+        # Position for technique cue (accent indication handled by color/size)
         cue_y = y + arrow_size // 2 + 25
-        if step.accent > 0.5:
-            painter.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-            painter.drawText(x - 15, cue_y, "АКЦЕНТ!")
-            cue_y += 25
 
         # Draw technique cue (icon or text) below the arrow
         self.draw_technique_cue(painter, x, cue_y, step.technique, position="below")
@@ -199,41 +235,57 @@ class StepsPreviewWidget(QWidget):
                 painter.drawText(x, y, technique)
 
     def draw_large_down_arrow(self, painter, x, y, size):
-        """Draw large downstroke arrow."""
+        """Draw large downstroke arrow with filled head."""
         # Vertical shaft
         shaft_length = size // 2
         painter.drawLine(x, y - shaft_length // 2, x, y + shaft_length // 2)
 
-        # Arrow head - bigger and more prominent
-        head_size = size // 3
-        painter.drawLine(
-            x, y + shaft_length // 2, x - head_size, y + shaft_length // 2 - head_size
-        )
-        painter.drawLine(
-            x, y + shaft_length // 2, x + head_size, y + shaft_length // 2 - head_size
-        )
+        # Arrow head - filled triangle like in timeline
+        head_width = int(size * 0.5)
+        head_height = int(size * 0.35)
+        bottom = y + shaft_length // 2
+        points = [
+            QPoint(x, bottom),
+            QPoint(x - head_width // 2, bottom - head_height),
+            QPoint(x + head_width // 2, bottom - head_height),
+        ]
+        painter.save()
+        painter.setBrush(QBrush(painter.pen().color()))
+        painter.drawPolygon(QPolygon(points))
+        painter.restore()
 
     def draw_large_up_arrow(self, painter, x, y, size):
-        """Draw large upstroke arrow."""
+        """Draw large upstroke arrow with filled head."""
         # Vertical shaft
         shaft_length = size // 2
         painter.drawLine(x, y - shaft_length // 2, x, y + shaft_length // 2)
 
-        # Arrow head - bigger and more prominent
-        head_size = size // 3
-        painter.drawLine(
-            x, y - shaft_length // 2, x - head_size, y - shaft_length // 2 + head_size
-        )
-        painter.drawLine(
-            x, y - shaft_length // 2, x + head_size, y - shaft_length // 2 + head_size
-        )
+        # Arrow head - filled triangle like in timeline
+        head_width = int(size * 0.5)
+        head_height = int(size * 0.35)
+        top = y - shaft_length // 2
+        points = [
+            QPoint(x, top),
+            QPoint(x - head_width // 2, top + head_height),
+            QPoint(x + head_width // 2, top + head_height),
+        ]
+        painter.save()
+        painter.setBrush(QBrush(painter.pen().color()))
+        painter.drawPolygon(QPolygon(points))
+        painter.restore()
 
     def draw_large_rest(self, painter, x, y, size):
-        """Draw large rest symbol."""
-        rest_size = size // 3
-        # Draw as thick horizontal line
-        painter.drawLine(x - rest_size, y, x + rest_size, y)
-
-        # Add small vertical lines at ends for better visibility
-        painter.drawLine(x - rest_size, y - 5, x - rest_size, y + 5)
-        painter.drawLine(x + rest_size, y - 5, x + rest_size, y + 5)
+        """Draw large rest symbol as rounded rectangle like in timeline."""
+        rest_size = int(size / 4)
+        
+        painter.save()
+        color = QColor(150, 150, 170)  # Gray color for rests
+        color.setAlpha(120)
+        painter.setBrush(QBrush(color))
+        painter.setPen(QPen(color))
+        
+        rest_rect = QRect(
+            x - rest_size, y - rest_size // 2, rest_size * 2, rest_size
+        )
+        painter.drawRoundedRect(rest_rect, 2, 2)
+        painter.restore()
