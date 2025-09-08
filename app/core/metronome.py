@@ -1,18 +1,19 @@
-import time
 import threading
+import time
 from typing import Callable, Optional
-from PySide6.QtCore import QObject, Signal, QTimer
+
+from PySide6.QtCore import QObject, Signal
 
 
 class Metronome(QObject):
     """Enhanced metronome with Qt signal integration for GUI updates."""
-    
+
     # Qt signals for thread-safe communication with GUI
     tick = Signal(float, int)  # timestamp, step_index
     started = Signal()
     stopped = Signal()
     bpm_changed = Signal(int)
-    
+
     def __init__(self, bpm: int = 120, steps_per_beat: int = 2):
         super().__init__()
         self.bpm = bpm
@@ -21,7 +22,7 @@ class Metronome(QObject):
         self._thread: Optional[threading.Thread] = None
         self._callback: Callable[[float, int], None] = lambda ts, idx: None
         self._current_step = 0
-        
+
         # Connect internal signal to callback for backward compatibility
         self.tick.connect(self._on_tick)
 
@@ -35,7 +36,7 @@ class Metronome(QObject):
     def set_callback(self, callback: Callable[[float, int], None]):
         """Set callback for backward compatibility."""
         self._callback = callback
-        
+
     def _on_tick(self, timestamp: float, step_index: int):
         """Internal tick handler that calls the callback."""
         self._callback(timestamp, step_index)
@@ -45,33 +46,34 @@ class Metronome(QObject):
         step_duration = 60.0 / self.bpm / self.steps_per_beat
         next_time = time.perf_counter()
         last_bpm = self.bpm
-        
+
         while self._running:
             current_time = time.perf_counter()
-            
+
             # Check if BPM changed and recalculate timing
             if self.bpm != last_bpm:
                 step_duration = 60.0 / self.bpm / self.steps_per_beat
                 last_bpm = self.bpm
                 # Adjust next_time to maintain phase
                 next_time = current_time + step_duration
-            
+
             if current_time >= next_time:
                 # Emit Qt signal for GUI updates (thread-safe)
                 self.tick.emit(current_time, self._current_step)
                 self._current_step += 1
                 next_time += step_duration
-            
-            # Adaptive sleep for better timing precision
-            sleep_time = max(0, next_time - time.perf_counter() - 0.001)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+
+            # Adaptive sleep for better timing precision. Always yield the
+            # CPU for a tiny interval even if we're behind schedule to avoid
+            # a busy loop that would hog the processor.
+            sleep_time = next_time - time.perf_counter() - 0.001
+            time.sleep(max(sleep_time, 0.001))
 
     def start(self):
         """Start the metronome."""
         if self._running:
             return
-        
+
         self._running = True
         self._current_step = 0
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -82,7 +84,7 @@ class Metronome(QObject):
         """Stop the metronome."""
         if not self._running:
             return
-            
+
         self._running = False
         if self._thread:
             self._thread.join(timeout=1.0)
@@ -92,7 +94,7 @@ class Metronome(QObject):
     def pause(self):
         """Pause the metronome (alias for stop)."""
         self.stop()
-        
+
     def reset(self):
         """Reset step counter to zero."""
         self._current_step = 0
@@ -100,7 +102,7 @@ class Metronome(QObject):
     def is_running(self) -> bool:
         """Check if metronome is currently running."""
         return self._running
-        
+
     def get_current_step(self) -> int:
         """Get the current step index."""
         return self._current_step
