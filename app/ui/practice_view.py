@@ -126,7 +126,7 @@ class PracticeView(QWidget):
 
         # Next progression button
         self.next_progression_button = QPushButton("Следующая\nпрогрессия")
-        self.next_progression_button.setMaximumWidth(120)
+        self.next_progression_button.setMaximumWidth(90)
         self.next_progression_button.setMinimumHeight(60)
         self.next_progression_button.setStyleSheet("""
             QPushButton { font-size: 10px; padding: 5px;
@@ -154,7 +154,7 @@ class PracticeView(QWidget):
 
         # Custom widget for chord progression display
         self.chord_display_widget = QWidget()
-        self.chord_display_widget.setMinimumHeight(120)
+        self.chord_display_widget.setMinimumHeight(90)
         chord_layout.addWidget(self.chord_display_widget, 0, Qt.AlignmentFlag.AlignTop)
         chord_layout.addStretch(1)  # Push content up, leave flexible space below
 
@@ -322,7 +322,7 @@ class PracticeView(QWidget):
             - chord_spacing
         )
         start_x = (self.chord_display_widget.width() - total_width) // 2
-        y = 20
+        y = 10
 
         # Draw chord boxes
         for i, chord in enumerate(self.current_progression):
