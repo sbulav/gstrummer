@@ -105,37 +105,57 @@ class PracticeView(QWidget):
         self.transport = TransportControls()
         controls_layout.addWidget(self.transport)
 
-        # Chord progression display
+        # Chord progression display - Split into two widgets
         progression_group = QGroupBox("Прогрессия аккордов")
-        progression_layout = QVBoxLayout(progression_group)
+        progression_main_layout = QHBoxLayout(progression_group)
         
-        # Song info label
-        self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
-        self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
-        progression_layout.addWidget(self.song_info_label)
+        # Left widget - Button container
+        button_container = QWidget()
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(5, 10, 5, 10)
         
         # Next progression button
-        self.next_progression_button = QPushButton("Следующая прогрессия")
-        self.next_progression_button.setMaximumWidth(150)
+        self.next_progression_button = QPushButton("Следующая\nпрогрессия")
+        self.next_progression_button.setMaximumWidth(100)
+        self.next_progression_button.setMinimumHeight(60)
         self.next_progression_button.setStyleSheet("""
             QPushButton {
                 font-size: 10px;
-                padding: 3px;
+                padding: 5px;
                 background-color: #e0e0e0;
                 border: 1px solid #cccccc;
-                border-radius: 3px;
+                border-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #d0d0d0;
             }
         """)
-        progression_layout.addWidget(self.next_progression_button, 0, Qt.AlignmentFlag.AlignCenter)
+        button_layout.addWidget(self.next_progression_button, 0, Qt.AlignmentFlag.AlignCenter)
+        button_layout.addStretch()
+        
+        # Right widget - Chord display container
+        chord_container = QWidget()
+        chord_layout = QVBoxLayout(chord_container)
+        chord_layout.setContentsMargins(10, 5, 10, 5)
+        
+        # Song info label
+        self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
+        self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
+        chord_layout.addWidget(self.song_info_label)
         
         # Custom widget for chord progression display
         self.chord_display_widget = QWidget()
         self.chord_display_widget.setMinimumHeight(120)
-        progression_layout.addWidget(self.chord_display_widget)
+        chord_layout.addWidget(self.chord_display_widget)
+        
+        # Add both containers to main layout
+        progression_main_layout.addWidget(button_container)
+        progression_main_layout.addWidget(chord_container)
+        
+        # Set stretch factors: 1 for button, 3 for chords (25%/75% split)
+        progression_main_layout.setStretchFactor(button_container, 1)
+        progression_main_layout.setStretchFactor(chord_container, 3)
 
         controls_layout.addWidget(progression_group)
 
