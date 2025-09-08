@@ -33,34 +33,34 @@
 - id: shestorka
   name: "Шестерка (Русская 6-ка)"
   time_sig: [4,4]
-  steps_per_bar: 6
+  steps_per_bar: 8
   bpm_default: 90
   bpm_min: 60
   bpm_max: 180
-  notes: "Классика дворового рока. Схема: D U D D U D"
+  notes: "Классика дворового рока. Схема: D U D D U D (пауза на 4-й доле)"
   steps:
     - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.166, dir: U}
-    - {t: 0.333, dir: D}
-    - {t: 0.5,   dir: D}
-    - {t: 0.666, dir: U}
-    - {t: 0.833, dir: D}
+    - {t: 0.125, dir: U}
+    - {t: 0.25,  dir: D}
+    - {t: 0.375, dir: D, accent: 0.8}
+    - {t: 0.5,   dir: U}
+    - {t: 0.625, dir: D}
 
 - id: shestorka_mute
   name: "Шестерка с глушением"
   time_sig: [4,4]
-  steps_per_bar: 6
+  steps_per_bar: 8
   bpm_default: 90
   bpm_min: 60
   bpm_max: 180
   notes: "Классическая шестерка с приглушкой на 4-й доле (D U D - U D)"
   steps:
     - {t: 0.0,   dir: D, accent: 1.0}
-    - {t: 0.166, dir: U}
-    - {t: 0.333, dir: D}
-    - {t: 0.5,   dir: -}
-    - {t: 0.666, dir: U}
-    - {t: 0.833, dir: D}
+    - {t: 0.125, dir: U}
+    - {t: 0.25,  dir: D}
+    - {t: 0.375, dir: -, accent: 0.8}
+    - {t: 0.5,   dir: U}
+    - {t: 0.625, dir: D}
 
 - id: vosmerka
   name: "Восьмерка (Русская 8-ка)"
