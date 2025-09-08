@@ -177,10 +177,16 @@ class StepsPreviewWidget(QWidget):
 
 
     def draw_small_step(self, painter, x, y, step):
-        """Draw the action+1 step with smaller arrow below."""
-        color = self.upcoming_color
-        arrow_size = self.small_arrow_size
-        line_width = 3
+        """Draw the action+1 step with smaller arrow in top right corner."""
+        # Colors and sizes based on accent (similar to main step but smaller)
+        if step.accent > 0.5:
+            color = self.accent_color
+            arrow_size = int(self.small_arrow_size * 1.2)
+            line_width = 4
+        else:
+            color = self.upcoming_color
+            arrow_size = self.small_arrow_size
+            line_width = 3
 
         painter.setPen(
             QPen(

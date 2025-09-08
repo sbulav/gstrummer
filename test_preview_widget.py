@@ -11,14 +11,14 @@ from app.core.patterns import StrumPattern, Step
 def create_test_pattern():
     """Create a simple test pattern."""
     steps = [
-        Step(t=0.0, dir="D", technique="open", accent=0.8),
-        Step(t=0.125, dir="U", technique="open", accent=0.0),
-        Step(t=0.25, dir="D", technique="open", accent=0.3),
-        Step(t=0.375, dir="U", technique="open", accent=0.0),
-        Step(t=0.5, dir="D", technique="open", accent=0.0),
-        Step(t=0.625, dir="U", technique="open", accent=0.0),
-        Step(t=0.75, dir="D", technique="open", accent=1.0),
-        Step(t=0.875, dir="U", technique="open", accent=0.0),
+        Step(t=0.0, dir="D", technique="open", accent=0.8),   # Accent - orange
+        Step(t=0.125, dir="U", technique="open", accent=0.0), # Normal - gray
+        Step(t=0.25, dir="D", technique="open", accent=0.3),  # Normal - gray
+        Step(t=0.375, dir="U", technique="open", accent=0.7), # Accent - orange
+        Step(t=0.5, dir="D", technique="open", accent=0.0),   # Normal - gray
+        Step(t=0.625, dir="U", technique="open", accent=0.0), # Normal - gray
+        Step(t=0.75, dir="D", technique="open", accent=1.0),  # Accent - orange
+        Step(t=0.875, dir="U", technique="open", accent=0.6), # Accent - orange
     ]
     
     return StrumPattern(
