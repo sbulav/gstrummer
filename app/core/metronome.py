@@ -22,6 +22,7 @@ class Metronome(QObject):
         self._thread: Optional[threading.Thread] = None
         self._callback: Callable[[float, int], None] = lambda ts, idx: None
         self._current_step = 0
+        self._next_step_duration: Optional[float] = None
 
         # Connect internal signal to callback for backward compatibility
         self.tick.connect(self._on_tick)
@@ -37,6 +38,12 @@ class Metronome(QObject):
         """Set callback for backward compatibility."""
         self._callback = callback
 
+    # ------------------------------------------------------------------
+    # Dynamic step scheduling
+    def set_step_duration(self, duration: float) -> None:
+        """Schedule the duration for the next step in seconds."""
+        self._next_step_duration = max(0.001, duration)
+
     def _on_tick(self, timestamp: float, step_index: int):
         """Internal tick handler that calls the callback."""
         self._callback(timestamp, step_index)
@@ -45,23 +52,23 @@ class Metronome(QObject):
         """Main metronome thread loop with improved timing accuracy."""
         step_duration = 60.0 / self.bpm / self.steps_per_beat
         next_time = time.perf_counter()
-        last_bpm = self.bpm
 
         while self._running:
             current_time = time.perf_counter()
-
-            # Check if BPM changed and recalculate timing
-            if self.bpm != last_bpm:
-                step_duration = 60.0 / self.bpm / self.steps_per_beat
-                last_bpm = self.bpm
-                # Adjust next_time to maintain phase
-                next_time = current_time + step_duration
 
             if current_time >= next_time:
                 # Emit Qt signal for GUI updates (thread-safe)
                 self.tick.emit(current_time, self._current_step)
                 self._current_step += 1
-                next_time += step_duration
+
+                # Determine duration for the next step
+                if self._next_step_duration is not None:
+                    step_duration = self._next_step_duration
+                    self._next_step_duration = None
+                else:
+                    step_duration = 60.0 / self.bpm / self.steps_per_beat
+
+                next_time = current_time + step_duration
 
             # Adaptive sleep for better timing precision. Always yield the
             # CPU for a tiny interval even if we're behind schedule to avoid

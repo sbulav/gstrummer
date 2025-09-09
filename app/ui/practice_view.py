@@ -483,6 +483,15 @@ class PracticeView(QWidget):
                     step.dir, step.accent, step.technique, chord=current_chord
                 )
 
+            # Compute timing for next step
+            next_step = self.current_pattern.steps[
+                (bar_step + 1) % len(self.current_pattern.steps)
+            ]
+            delta_t = (next_step.t - step.t) % 1.0
+            beats_per_bar = self.current_pattern.time_sig[0]
+            bar_duration = 60.0 / self.metronome.bpm * beats_per_bar
+            self.metronome.set_step_duration(delta_t * bar_duration)
+
             # Play metronome click with beat awareness
             beats_per_bar = self.current_pattern.time_sig[0]
             steps_per_beat = bar_length // beats_per_bar
