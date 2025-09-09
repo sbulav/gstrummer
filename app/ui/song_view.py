@@ -156,6 +156,12 @@ class SongView(QWidget):
         # Transport controls
         self.transport = TransportControls()
         controls_layout.addWidget(self.transport)
+        self.transport.audio_status_bar.set_available_instruments(
+            self.audio.get_available_instruments()
+        )
+        self.transport.audio_status_bar.set_instrument(
+            self.audio.get_chord_instrument()
+        )
 
         splitter.addWidget(controls_widget)
 
@@ -199,6 +205,7 @@ class SongView(QWidget):
         # Audio control connections
         self.transport.volume_changed.connect(self.on_volume_changed)
         self.transport.enabled_changed.connect(self.on_enabled_changed)
+        self.transport.instrument_changed.connect(self.on_instrument_changed)
 
         # Metronome connections
         self.metronome.tick.connect(self.on_metronome_tick)
@@ -461,6 +468,10 @@ class SongView(QWidget):
             self.audio.set_click_enabled(enabled)
         elif audio_type == "strum":
             self.audio.set_strum_enabled(enabled)
+
+    def on_instrument_changed(self, instrument: str):
+        """Handle instrument switch from audio settings."""
+        self.audio.set_chord_instrument(instrument)
 
     def on_metronome_tick(self, timestamp: float, step_index: int):
         """Handle metronome tick for GUI updates."""
