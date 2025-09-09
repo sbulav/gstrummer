@@ -695,3 +695,34 @@
   notes: |
     Оригинал чаще ощущается как 6/8 с арпеджио.
     Здесь адаптация под страмминг; можно перейти на перебор для аутентичности.
+
+- title: "Сансара"
+  artist: "Баста"
+  bpm: 76
+  time_sig: [4,4]
+  pattern_id: "sansara_boy_v2"
+  progression: ["C", "Am", "Em", "D"]
+  structure:
+    intro:
+      chords: ["C", "Am", "Em"]
+      pattern: "sansara_boy_v2"
+      bars: 2
+      repeat: 1
+    verse:
+      chords: ["C", "Am", "Em"]
+      pattern: "sansara_boy_v2"
+      bars: 4
+      repeat: 1
+    chorus:
+      chords: ["Am", "C", "G", "D"]
+      pattern: "sansara_boy_v2"
+      bars: 4
+      repeat: 2
+  all_chords: ["C", "Am", "Em", "G", "D"]
+  difficulty: "beginner–intermediate"
+  notes: |
+    Медленный бой U U D D U U U D с акцентами на длинных первых двух ударах.
+    Вступление играется два раза: C–Am–Em.
+    Куплет: типовая прогрессия C–Am–Em (4 такта).
+    Припев: Am–C–G–D (по источнику), повторяется дважды.
+    Подходящая динамика и акценты передают атмосферу оригинального исполнения.
