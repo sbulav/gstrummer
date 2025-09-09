@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import numpy as np
 
 from .chord_library import get_chord_diagram
@@ -34,7 +35,9 @@ def generate_chord(
     direction: str = "D",
     duration: float = 1.0,
     sample_rate: int = 44100,
+    soundfont_path: str | None = None,
 ) -> np.ndarray:
+    logger = logging.getLogger(__name__)
     """Generate a chord waveform.
 
     Parameters
@@ -55,11 +58,17 @@ def generate_chord(
     if instrument == "sf2_guitar":
         if render_soundfont_chord is None:
             raise RuntimeError("SoundFont backend not available")
+        
+        logger = logging.getLogger(__name__)
+        logger.debug("Using SoundFont synthesis for chord %s with soundfont: %s", 
+                   chord_name, soundfont_path)
+        
         return render_soundfont_chord(
             chord_name,
             direction=direction,
             duration=duration,
             sample_rate=sample_rate,
+            soundfont_path=soundfont_path,
         ).astype(np.float32)
 
     freqs = _frequencies_from_chord(chord_name)
@@ -77,6 +86,7 @@ def generate_chord(
             ) * envelope
             output[: wave.size] += wave
     else:  # guitar
+        logger.debug("Using built-in guitar synthesis for chord %s", chord_name)
         strum_delay = 0.01  # seconds between strings
         indices = list(range(len(freqs)))
         if direction.upper() == "U":

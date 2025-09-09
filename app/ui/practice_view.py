@@ -491,7 +491,7 @@ class PracticeView(QWidget):
                     else None
                 )
                 self.audio.play_strum(
-                    step.dir, step.accent, step.technique, chord=current_chord
+                    step.dir, step.accent, step.technique, chord=current_chord, instrument=self.audio.get_chord_instrument()
                 )
 
             # Play metronome click with beat awareness
