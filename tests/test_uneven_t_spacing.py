@@ -6,12 +6,17 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from guitar_trainer import GuitarTrainer
-from app.core.patterns import Step, StrumPattern
+from app.core.patterns import Step, StrumPattern, Song
 
 try:  # pragma: no cover - environment may lack Qt libs
     from app.ui.practice_view import PracticeView
 except Exception:  # pragma: no cover
     PracticeView = None
+
+try:  # pragma: no cover - environment may lack Qt libs
+    from app.ui.song_view import SongView
+except Exception:  # pragma: no cover
+    SongView = None
 
 
 class DummyAudio:
@@ -89,3 +94,27 @@ def test_guitar_trainer_uneven_timing():
         trainer.on_tick(0.0, idx)
         assert trainer.metronome.durations[-1] == pytest.approx(expected)
     assert len(trainer.audio.calls) == 4
+
+
+@pytest.mark.skipif(SongView is None, reason="SongView import failed")
+def test_song_view_uneven_timing():
+    view = SongView.__new__(SongView)
+    view.audio = DummyAudio()
+    view.metronome = DummyMetronome(bpm=120)
+    view.patterns = {"uneven": pattern}
+    view.current_song = Song(
+        title="Test",
+        artist="A",
+        bpm=120,
+        time_sig=(4, 4),
+        pattern_id="uneven",
+        progression=[],
+        notes="",
+    )
+    view.override_pattern_id = None
+    view.current_section = None
+
+    for idx, expected in enumerate(expected_durations):
+        view.on_practice_tick(0.0, idx)
+        assert view.metronome.durations[-1] == pytest.approx(expected)
+    assert len(view.audio.calls) == 4
