@@ -76,7 +76,7 @@ class TimelineWidget(QWidget):
         base_step = 65 if self.steps_per_bar > 12 else 80
         width = self.steps_per_bar * base_step + 2 * self.margin
         return QSize(width, self.minimumHeight())
-        
+
     def set_pattern(self, pattern):
         """Set the strumming pattern to display."""
         self.pattern = pattern
@@ -172,25 +172,31 @@ class TimelineWidget(QWidget):
         # Draw beat markers above the fretboard
         self.draw_beat_markers(painter, start_x, int(start_y - 25))
 
-        # Draw steps
-        for i in range(self.steps_per_bar):
-            step_x = start_x + i * self.step_width
-            step = self.pattern.steps[i] if i < len(self.pattern.steps) else None
-            is_current = i == self.current_step % self.steps_per_bar
+        # Draw steps using normalized t positions
+        for i, step in enumerate(self.pattern.steps):
+            step_x = start_x + step.t * bar_width
+            is_current = i == self.current_step % len(self.pattern.steps)
             self.draw_step(painter, step_x, center_y, step, is_current, i)
 
         # Draw progress indicator below the fretboard with countdown
         beats_per_bar = self.time_signature[0]
-        steps_per_beat = self.steps_per_bar / beats_per_bar
-        step_ms = 60000 / self.bpm / steps_per_beat if self.bpm else 0
+        bar_ms = 60000 / self.bpm * beats_per_bar if self.bpm else 0
+        current_idx = self.current_step % len(self.pattern.steps)
+        current_step = self.pattern.steps[current_idx]
+        next_step = self.pattern.steps[(current_idx + 1) % len(self.pattern.steps)]
+        delta_t = (next_step.t - current_step.t) % 1.0
+        step_ms = bar_ms * delta_t
         if self.last_step_time is None:
             ms_until_next = step_ms
+            progress_t = current_step.t
         else:
             elapsed = (monotonic() - self.last_step_time) * 1000
             ms_until_next = max(0, step_ms - elapsed)
+            progress_ratio = min(1.0, elapsed / step_ms) if step_ms > 0 else 0
+            progress_t = current_step.t + progress_ratio * delta_t
 
         self.draw_progress(
-            painter, start_x, int(start_y + bar_height + 10), ms_until_next
+            painter, start_x, int(start_y + bar_height + 10), progress_t, ms_until_next
         )
 
     def draw_beat_markers(self, painter, start_x, y):
@@ -328,13 +334,13 @@ class TimelineWidget(QWidget):
         painter.drawRoundedRect(rest_rect, 2, 2)
         painter.restore()
 
-    def draw_progress(self, painter, start_x, y, ms_until_next):
+    def draw_progress(self, painter, start_x, y, progress_t, ms_until_next):
         """Draw progress bar showing position in the bar with countdown."""
         if not self.pattern:
             return
 
         bar_width = self.steps_per_bar * self.step_width
-        progress_width = (self.current_step % self.steps_per_bar) * self.step_width
+        progress_width = progress_t * bar_width
 
         # Background
         painter.setPen(QPen(self.step_color, 1))

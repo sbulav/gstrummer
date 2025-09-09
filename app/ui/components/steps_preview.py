@@ -19,19 +19,21 @@ class StepsPreviewWidget(QWidget):
         self.pattern = None
         self.current_step = 0
         self.preview_count = 2  # Show next 2 steps (current + next)
-        
+
         # Timing for fill animation
         self.bpm = 120
         self.last_step_time = None
         self.fill_progress = 0.0  # 0.0 to 1.0, progress until next beat
-        
+
         # Animation timer
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self.update_fill_progress)
         self.animation_timer.start(50)  # Update every 50ms
 
         # Visual properties
-        self.main_arrow_size = 100  # Large arrow for next action (reduced for better centering)
+        self.main_arrow_size = (
+            100  # Large arrow for next action (reduced for better centering)
+        )
         self.small_arrow_size = 50  # Small arrow for action+1 (reduced for top corner)
         self.vertical_spacing = 100
 
@@ -54,28 +56,33 @@ class StepsPreviewWidget(QWidget):
             self.current_step = step
             self.last_step_time = monotonic()
             self.update()
-    
+
     def set_bpm(self, bpm: int):
         """Set current BPM for timing calculations."""
         self.bpm = bpm
-        
+
     def update_fill_progress(self):
         """Update fill progress based on elapsed time since last step."""
         if not self.pattern or not self.last_step_time:
             self.fill_progress = 0.0
             return
-            
-        # Calculate time per step
-        beats_per_bar = 4  # Assume 4/4 for now
-        steps_per_beat = self.pattern.steps_per_bar / beats_per_bar
-        step_duration = 60.0 / self.bpm / steps_per_beat if self.bpm else 0
-        
+
+        # Calculate time per step based on normalized t values
+        beats_per_bar = self.pattern.time_sig[0]
+        bar_duration = 60.0 / self.bpm * beats_per_bar if self.bpm else 0
+
+        step_idx = self.current_step % len(self.pattern.steps)
+        current_step = self.pattern.steps[step_idx]
+        next_step = self.pattern.steps[(step_idx + 1) % len(self.pattern.steps)]
+        delta_t = (next_step.t - current_step.t) % 1.0
+        step_duration = bar_duration * delta_t if bar_duration else 0
+
         elapsed = monotonic() - self.last_step_time
         if step_duration > 0:
             self.fill_progress = min(1.0, elapsed / step_duration)
         else:
             self.fill_progress = 0.0
-        
+
         self.update()
 
     def get_upcoming_steps(self):
@@ -102,7 +109,7 @@ class StepsPreviewWidget(QWidget):
 
         # Background
         painter.fillRect(self.rect(), self.bg_color)
-        
+
         # Draw animated fill (light green progress)
         if self.pattern and self.fill_progress > 0:
             fill_height = int(self.height() * self.fill_progress)
@@ -127,7 +134,7 @@ class StepsPreviewWidget(QWidget):
         # Center positions
         center_x = self.width() // 2
         main_y = self.height() // 2  # Main arrow position (centered)
-        
+
         # Small arrow position - right top corner
         small_x = self.width() - 60  # 60px from right edge
         small_y = 60  # 60px from top
@@ -173,9 +180,8 @@ class StepsPreviewWidget(QWidget):
         elif step.dir == "-":
             self.draw_large_rest(painter, x, y, arrow_size)
 
-
-
-
+        # Draw technique cue below the arrow
+        self.draw_technique_cue(painter, x, y + arrow_size // 2 + 10, step.technique)
 
     def draw_small_step(self, painter, x, y, step):
         """Draw the action+1 step with smaller arrow in top right corner."""
@@ -213,7 +219,10 @@ class StepsPreviewWidget(QWidget):
         painter.setPen(QPen(color, 1))
         painter.drawText(x - 15, y - arrow_size // 2 - 15, "затем")
 
-
+        # Technique cue to the right of the small arrow
+        self.draw_technique_cue(
+            painter, x + arrow_size // 2 + 10, y, step.technique, position="right"
+        )
 
     def draw_technique_cue(
         self, painter, x, y, technique: str, position: str = "below"
@@ -280,15 +289,13 @@ class StepsPreviewWidget(QWidget):
     def draw_large_rest(self, painter, x, y, size):
         """Draw large rest symbol as rounded rectangle like in timeline."""
         rest_size = int(size / 4)
-        
+
         painter.save()
         color = QColor(150, 150, 170)  # Gray color for rests
         color.setAlpha(120)
         painter.setBrush(QBrush(color))
         painter.setPen(QPen(color))
-        
-        rest_rect = QRect(
-            x - rest_size, y - rest_size // 2, rest_size * 2, rest_size
-        )
+
+        rest_rect = QRect(x - rest_size, y - rest_size // 2, rest_size * 2, rest_size)
         painter.drawRoundedRect(rest_rect, 2, 2)
         painter.restore()

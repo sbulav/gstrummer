@@ -6,8 +6,8 @@ class DummyAudio:
     def __init__(self):
         self.calls = []
 
-    def play_strum(self, direction, accent, chord=None):
-        self.calls.append((direction, accent, chord))
+    def play_strum(self, direction, accent, technique, chord=None):
+        self.calls.append((direction, accent, technique, chord))
 
     def play_click_high(self):
         pass
@@ -35,4 +35,4 @@ def test_on_practice_tick_uses_current_chord():
 
     view.on_practice_tick(0.0, 0)
 
-    assert view.audio.calls == [("D", 1.0, "Am")]
+    assert view.audio.calls == [("D", 1.0, "open", "Am")]

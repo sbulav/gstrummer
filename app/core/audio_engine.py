@@ -351,6 +351,7 @@ class AudioEngine:
         self,
         direction: str,
         accent: float = 0.0,
+        technique: str = "open",
         chord: Optional[str] = None,
         instrument: str = "guitar",
     ) -> None:
@@ -359,6 +360,7 @@ class AudioEngine:
             return
 
         if chord:
+            # Currently technique does not affect generated chords
             self.play_chord(
                 chord, direction=direction, accent=accent, instrument=instrument
             )
@@ -376,10 +378,18 @@ class AudioEngine:
         else:
             sample_name = f"strum_{direction_word}"
 
-        # Calculate volume based on accent
+        # Calculate volume based on accent and technique
         base_volume = self._strum_volume
         accent_boost = accent * 0.3  # Up to 30% volume boost for accents
-        volume = base_volume * (1.0 + accent_boost)
+
+        technique_modifier = {
+            "open": 1.0,
+            "mute": 0.2,
+            "palm": 0.5,
+            "ghost": 0.3,
+        }.get(technique, 1.0)
+
+        volume = base_volume * (1.0 + accent_boost) * technique_modifier
 
         self._play_sample(sample_name, volume)
 

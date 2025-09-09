@@ -127,11 +127,13 @@ class PracticeView(QWidget):
         self.next_progression_button = QPushButton("Следующая\nпрогрессия")
         self.next_progression_button.setMaximumWidth(90)
         self.next_progression_button.setMinimumHeight(60)
-        self.next_progression_button.setStyleSheet("""
+        self.next_progression_button.setStyleSheet(
+            """
             QPushButton { font-size: 10px; padding: 5px;
                         background-color: #e0e0e0; border: 1px solid #cccccc; border-radius: 5px; }
             QPushButton:hover { background-color: #d0d0d0; }
-        """)
+        """
+        )
 
         button_layout.addWidget(self.song_title_label, 1)
         button_layout.addWidget(
@@ -478,7 +480,7 @@ class PracticeView(QWidget):
                     else None
                 )
                 self.audio.play_strum(
-                    step.dir, step.accent, chord=current_chord
+                    step.dir, step.accent, step.technique, chord=current_chord
                 )
 
             # Play metronome click with beat awareness

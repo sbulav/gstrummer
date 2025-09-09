@@ -542,7 +542,9 @@ class SongView(QWidget):
 
             # Play strum or chord sound
             if step.dir != "-":
-                self.audio.play_strum(step.dir, step.accent, chord=current_chord)
+                self.audio.play_strum(
+                    step.dir, step.accent, step.technique, chord=current_chord
+                )
 
             # Play metronome click with beat awareness
             beats_per_bar = pattern.time_sig[0]

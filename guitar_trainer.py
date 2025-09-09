@@ -64,11 +64,14 @@ class AudioEngine:
             return
         print("CLICK" + ("!" if accent else ""))
 
-    def play_strum(self, direction: str, accent: float = 0.0) -> None:
+    def play_strum(
+        self, direction: str, accent: float = 0.0, technique: str = "open"
+    ) -> None:
         if not self._enabled or not self._strum_enabled or direction == "-":
             return
         accent_str = " (ACCENT)" if accent > 0.5 else ""
-        print(f"STRUM {direction}{accent_str}")
+        tech_str = f" [{technique}]" if technique != "open" else ""
+        print(f"STRUM {direction}{accent_str}{tech_str}")
 
     def set_enabled(self, enabled: bool) -> None:
         self._enabled = enabled
@@ -173,7 +176,7 @@ class GuitarTrainer:
         if bar_step < len(self.current_pattern.steps):
             step = self.current_pattern.steps[bar_step]
             if step.dir != "-":
-                self.audio.play_strum(step.dir, step.accent)
+                self.audio.play_strum(step.dir, step.accent, step.technique)
             if bar_step == 0:
                 self.audio.play_click(accent=True)
             elif bar_step % (bar_length // self.current_pattern.time_sig[0]) == 0:
