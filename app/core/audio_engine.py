@@ -2,9 +2,10 @@ import logging
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
+from .chord_synth import generate_chord
 
 logger = logging.getLogger(__name__)
 
@@ -91,11 +92,14 @@ class AudioEngine:
                 self._stream.start()
                 logger.info("Audio initialized with persistent stream")
             except Exception as stream_exc:
-                logger.warning("Failed to create persistent stream, falling back to sd.play: %s", stream_exc)
+                logger.warning(
+                    "Failed to create persistent stream, falling back to sd.play: %s",
+                    stream_exc,
+                )
                 self._stream = None
 
             self._audio_available = True
-            device_name = getattr(self._device_info, 'name', str(self._device_info))
+            device_name = getattr(self._device_info, "name", str(self._device_info))
             logger.info("Audio initialized: %s", device_name)
 
         except Exception as e:
@@ -146,6 +150,7 @@ class AudioEngine:
         """
         try:
             import soundfile as sf
+
             result = sf.read(str(path), dtype="float32", always_2d=False)
             data = result[0] if isinstance(result, tuple) else result  # type: ignore
             sr = result[1] if isinstance(result, tuple) and len(result) > 1 else self._sample_rate  # type: ignore
@@ -235,13 +240,13 @@ class AudioEngine:
         """Mix active samples into the output buffer (used with persistent stream)."""
         if status:
             logger.warning("Audio callback status: %s", status)
-        
+
         outdata.fill(0)
-        
+
         with self._audio_lock:
             if not self._active_samples:
                 return
-                
+
             finished: List[QueuedSample] = []
             for sample in self._active_samples:
                 start = sample.pos
@@ -251,7 +256,7 @@ class AudioEngine:
                 sample.pos = end
                 if sample.pos >= sample.data.shape[0]:
                     finished.append(sample)
-                    
+
             for sample in finished:
                 self._active_samples.remove(sample)
 
@@ -271,7 +276,7 @@ class AudioEngine:
             try:
                 data = self._samples[sample_name].copy()
                 data = np.asarray(data, dtype=self._dtype)
-                
+
                 with self._audio_lock:
                     self._active_samples.append(
                         QueuedSample(data=data, pos=0, volume=volume_multiplier)
@@ -296,6 +301,32 @@ class AudioEngine:
         except Exception as e:
             logger.error(f"Error playing sample {sample_name}: {e}")
 
+    def _play_data(self, data: np.ndarray, volume_multiplier: float = 1.0) -> None:
+        """Play raw audio data with volume control."""
+        if not self._enabled or not self._audio_available or sd is None:
+            return
+
+        # If we have a persistent stream, queue the data
+        if self._stream is not None:
+            try:
+                arr = np.asarray(data, dtype=self._dtype)
+                with self._audio_lock:
+                    self._active_samples.append(
+                        QueuedSample(data=arr, pos=0, volume=volume_multiplier)
+                    )
+                return
+            except Exception as e:
+                logger.warning(f"Stream playback failed: {e}")
+
+        # Fallback to direct playback
+        try:
+            with self._audio_lock:
+                arr = np.asarray(data, dtype=self._dtype)
+                arr *= self._master_volume * volume_multiplier
+                sd.play(arr, samplerate=self._sample_rate, blocking=False)
+        except Exception as e:
+            logger.error(f"Error playing generated audio: {e}")
+
     def play_click(self, accent: bool = False):
         """Play metronome click sound."""
         if not self._click_enabled:
@@ -316,10 +347,25 @@ class AudioEngine:
             return
         self._play_sample("click_high", self._click_volume * 1.1)
 
-    def play_strum(self, direction: str, accent: float = 0.0):
-        """Play strum sound based on direction and accent level."""
-        if not self._strum_enabled or direction == "-":
-            return  # No sound if disabled or for rests
+    def play_strum(
+        self,
+        direction: str,
+        accent: float = 0.0,
+        chord: Optional[str] = None,
+        instrument: str = "guitar",
+    ) -> None:
+        """Play strum sound or generated chord based on direction."""
+        if direction == "-":
+            return
+
+        if chord:
+            self.play_chord(
+                chord, direction=direction, accent=accent, instrument=instrument
+            )
+            return
+
+        if not self._strum_enabled:
+            return
 
         # Determine sample name - map single letters to full words
         direction_map = {"D": "down", "U": "up"}
@@ -337,8 +383,40 @@ class AudioEngine:
 
         self._play_sample(sample_name, volume)
 
+    def play_chord(
+        self,
+        chord: str,
+        direction: str = "D",
+        accent: float = 0.0,
+        instrument: str = "guitar",
+        duration: float = 1.0,
+    ) -> None:
+        """Generate and play a chord for songs mode."""
+        if not self._strum_enabled:
+            return
+
+        try:
+            data = generate_chord(
+                chord,
+                instrument=instrument,
+                direction=direction,
+                duration=duration,
+                sample_rate=self._sample_rate,
+            )
+        except Exception as exc:
+            logger.warning("Failed to generate chord %s: %s", chord, exc)
+            return
+
+        base_volume = self._strum_volume
+        accent_boost = accent * 0.3
+        volume = base_volume * (1.0 + accent_boost)
+        self._play_data(data, volume)
+
     def set_volumes(
-        self, click: Optional[float] = None, strum: Optional[float] = None, master: Optional[float] = None
+        self,
+        click: Optional[float] = None,
+        strum: Optional[float] = None,
+        master: Optional[float] = None,
     ):
         """Set volume levels (0.0 to 1.0)."""
         with self._audio_lock:

@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QGroupBox,
-    QTextEdit,
     QSplitter,
     QCheckBox,
 )
@@ -473,7 +472,14 @@ class PracticeView(QWidget):
 
             # Play strum sound
             if step.dir != "-":
-                self.audio.play_strum(step.dir, step.accent)
+                current_chord = (
+                    self.current_progression[self.current_chord_index]
+                    if self.current_progression
+                    else None
+                )
+                self.audio.play_strum(
+                    step.dir, step.accent, chord=current_chord
+                )
 
             # Play metronome click with beat awareness
             beats_per_bar = self.current_pattern.time_sig[0]

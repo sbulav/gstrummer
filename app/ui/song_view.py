@@ -526,14 +526,23 @@ class SongView(QWidget):
 
         bar_length = pattern.steps_per_bar
         bar_step = step_index % bar_length
+        current_chord: str | None = None
+        if self.current_section:
+            chord_index = (step_index // bar_length) % len(self.current_section.chords)
+            current_chord = self.current_section.chords[chord_index]
+        elif self.current_song.progression:
+            chord_index = (step_index // bar_length) % len(
+                self.current_song.progression
+            )
+            current_chord = self.current_song.progression[chord_index]
 
         # Play audio feedback
         if bar_step < len(pattern.steps):
             step = pattern.steps[bar_step]
 
-            # Play strum sound
+            # Play strum or chord sound
             if step.dir != "-":
-                self.audio.play_strum(step.dir, step.accent)
+                self.audio.play_strum(step.dir, step.accent, chord=current_chord)
 
             # Play metronome click with beat awareness
             beats_per_bar = pattern.time_sig[0]
