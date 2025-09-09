@@ -182,6 +182,15 @@ class GuitarTrainer:
             elif bar_step % (bar_length // self.current_pattern.time_sig[0]) == 0:
                 self.audio.play_click()
 
+            # Schedule next step based on pattern timing
+            next_step = self.current_pattern.steps[
+                (bar_step + 1) % len(self.current_pattern.steps)
+            ]
+            delta_t = (next_step.t - step.t) % 1.0
+            beats_per_bar = self.current_pattern.time_sig[0]
+            bar_duration = 60.0 / self.metronome.bpm * beats_per_bar
+            self.metronome.set_step_duration(delta_t * bar_duration)
+
         chord: Optional[str] = None
         if self.current_song:
             bar_index = step_index // bar_length
