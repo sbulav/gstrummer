@@ -46,7 +46,10 @@ class AudioSettingsPopup(QDialog):
         """Initialize the popup dialog UI."""
         self.setWindowTitle("Audio Settings - GStrummer")
         self.setModal(True)
-        self.setFixedSize(450, 350)
+        # Allow the dialog to size itself to the contents. The previous fixed
+        # height was too small which collapsed inner widgets making them
+        # unusable on some platforms.
+        self.setMinimumWidth(450)
 
         # Main layout
         layout = QVBoxLayout(self)
@@ -81,8 +84,9 @@ class AudioSettingsPopup(QDialog):
         button_box.rejected.connect(self.close)
         layout.addWidget(button_box)
 
-        # Apply styling
+        # Apply styling and finalise size once all widgets are in place
         self.setStyleSheet(self._get_dialog_stylesheet())
+        self.adjustSize()
 
     def _create_master_volume_section(self):
         """Create master volume controls section."""
