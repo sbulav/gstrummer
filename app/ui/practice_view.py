@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QGroupBox,
-    QTextEdit,
     QSplitter,
     QCheckBox,
 )
@@ -77,24 +76,14 @@ class PracticeView(QWidget):
         controls_line.addWidget(self.grid_checkbox)
         timeline_layout.addLayout(controls_line)
 
-        # Horizontal splitter for timeline and preview
-        # Horizontal splitter for timeline and preview
-        self.timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
-
-        # Timeline widget (left side)
+        # Timeline widget
         self.timeline = TimelineWidget()
-        self.timeline_splitter.addWidget(self.timeline)
         self.timeline.set_show_grid(self.grid_checkbox.isChecked())
+        timeline_layout.addWidget(self.timeline)
 
-        # Steps preview (right side)
+        # Steps preview widget placed below the timeline
         self.steps_preview = StepsPreviewWidget()
-        self.timeline_splitter.addWidget(self.steps_preview)
-
-        # Set proportions: timeline gets 70%, preview gets 30%
-        self.timeline_splitter.setStretchFactor(0, 7)
-        self.timeline_splitter.setStretchFactor(1, 3)
-
-        timeline_layout.addWidget(self.timeline_splitter)
+        timeline_layout.addWidget(self.steps_preview)
 
         splitter.addWidget(timeline_group)
 
@@ -128,11 +117,13 @@ class PracticeView(QWidget):
         self.next_progression_button = QPushButton("Следующая\nпрогрессия")
         self.next_progression_button.setMaximumWidth(90)
         self.next_progression_button.setMinimumHeight(60)
-        self.next_progression_button.setStyleSheet("""
+        self.next_progression_button.setStyleSheet(
+            """
             QPushButton { font-size: 10px; padding: 5px;
                         background-color: #e0e0e0; border: 1px solid #cccccc; border-radius: 5px; }
             QPushButton:hover { background-color: #d0d0d0; }
-        """)
+        """
+        )
 
         button_layout.addWidget(self.song_title_label, 1)
         button_layout.addWidget(
@@ -219,19 +210,7 @@ class PracticeView(QWidget):
             self.timeline.set_pattern(pattern)
             self.timeline.set_bpm(pattern.bpm_default)
             self.steps_preview.set_pattern(pattern)
-
-            # Hide or show steps_preview pane for 16 steps
-            idx = self.timeline_splitter.indexOf(self.steps_preview)
-            if pattern.steps_per_bar == 16:
-                if idx != -1:
-                    self.timeline_splitter.widget(idx).setParent(None)
-                self.timeline_splitter.setStretchFactor(0, 1)
-            else:
-                if idx == -1:
-                    self.timeline_splitter.addWidget(self.steps_preview)
-                    self.timeline_splitter.setStretchFactor(0, 7)
-                    self.timeline_splitter.setStretchFactor(1, 3)
-                self.steps_preview.show()
+            self.steps_preview.set_bpm(pattern.bpm_default)
 
             # Update transport controls
             self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
@@ -382,6 +361,7 @@ class PracticeView(QWidget):
         """Handle BPM change from transport controls."""
         self.metronome.set_bpm(bpm)
         self.timeline.set_bpm(bpm)
+        self.steps_preview.set_bpm(bpm)
 
     def on_pattern_changed(self, pattern_id: str):
         """Handle pattern change from transport controls."""
@@ -397,25 +377,10 @@ class PracticeView(QWidget):
             self.timeline.set_pattern(new_pattern)
             self.timeline.set_bpm(new_pattern.bpm_default)
             self.steps_preview.set_pattern(new_pattern)
+            self.steps_preview.set_bpm(new_pattern.bpm_default)
 
             # Update chord progression display
             self.update_chord_progression()
-
-            # Hide steps preview for 16-step patterns to avoid overlap
-            if new_pattern.steps_per_bar == 16:
-                # Remove steps_preview if still present
-                idx = self.timeline_splitter.indexOf(self.steps_preview)
-                if idx != -1:
-                    self.timeline_splitter.widget(idx).setParent(None)
-                self.timeline_splitter.setStretchFactor(0, 1)  # timeline gets 100%
-            else:
-                # Add steps_preview back if missing
-                idx = self.timeline_splitter.indexOf(self.steps_preview)
-                if idx == -1:
-                    self.timeline_splitter.addWidget(self.steps_preview)
-                    self.timeline_splitter.setStretchFactor(0, 7)
-                    self.timeline_splitter.setStretchFactor(1, 3)
-                self.steps_preview.show()
 
             # Configure metronome for the new pattern
             beats_per_bar = new_pattern.time_sig[0]
@@ -498,6 +463,7 @@ class PracticeView(QWidget):
     def on_step_hit(self, step_index: int):
         """Register manual onset from timeline widget."""
         self.evaluator.add_onset(monotonic())
+        self.steps_preview.set_current_step(step_index)
 
     def setup_shortcuts(self):
         """Setup keyboard shortcuts for better UX."""
@@ -546,3 +512,4 @@ class PracticeView(QWidget):
         self.transport.set_bpm(bpm)
         self.metronome.set_bpm(bpm)
         self.timeline.set_bpm(bpm)
+        self.steps_preview.set_bpm(bpm)
