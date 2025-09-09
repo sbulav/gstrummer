@@ -35,6 +35,8 @@ class SongView(QWidget):
         self.songs = []
         self.current_section_index = 0
         self.song_info_popup = None
+        # Currently selected pattern override (None means use song defaults)
+        self.override_pattern_id: str | None = None
 
         self.init_ui()
         self.setup_connections()
@@ -204,6 +206,7 @@ class SongView(QWidget):
         self.transport.pause_clicked.connect(self.pause_practice)
         self.transport.stop_clicked.connect(self.stop_practice)
         self.transport.bpm_changed.connect(self.on_bpm_changed)
+        self.transport.pattern_changed.connect(self.on_pattern_changed)
 
         # Audio control connections
         self.transport.volume_changed.connect(self.on_volume_changed)
@@ -221,6 +224,8 @@ class SongView(QWidget):
     def set_song(self, song):
         """Set the current song for practice."""
         self.current_song = song
+        # Reset any pattern override when switching songs
+        self.override_pattern_id = None
         if song:
             # Update progression controls and chord display
             self.progression_controls.set_song(song)
@@ -289,17 +294,20 @@ class SongView(QWidget):
             f"{self.current_section_index + 1} / {total_sections}"
         )
 
-        # Load pattern for this section
-        pattern_id = section.pattern
-        if pattern_id in self.patterns:
-            pattern = self.patterns[pattern_id]
-            self.load_pattern_for_section(pattern, section)
+        # Determine pattern to use (override or section default)
+        pattern_id = self.override_pattern_id or section.pattern
+        pattern = self.patterns.get(pattern_id)
+        bpm = section.bpm_override or self.current_song.bpm
+        if pattern:
+            # Clamp BPM to pattern range
+            bpm = max(pattern.bpm_min, min(pattern.bpm_max, bpm))
+            self.load_pattern_for_section(pattern, bpm)
+            self.transport.select_pattern(pattern_id)
 
         # Update chord display for this section
         self.chord_display.set_section(section)
 
         # Update BPM (section override or song default)
-        bpm = section.bpm_override or self.current_song.bpm
         self.transport.set_bpm(bpm)
         self.metronome.set_bpm(bpm)
         self.timeline.set_bpm(bpm)
@@ -312,29 +320,23 @@ class SongView(QWidget):
         self.current_section_label.setText("Режим: Упражнение")
         self.section_progress.setText("1 / 1")
 
-        # Load main pattern
-        pattern_id = self.current_song.pattern_id
-        if pattern_id in self.patterns:
-            pattern = self.patterns[pattern_id]
-            self.timeline.set_pattern(pattern)
-            self.timeline.set_bpm(self.current_song.bpm)
-            self.steps_preview.set_pattern(pattern)
+        # Load main pattern (or overridden)
+        pattern_id = self.override_pattern_id or self.current_song.pattern_id
+        pattern = self.patterns.get(pattern_id)
+        if pattern:
+            bpm = max(
+                pattern.bpm_min,
+                min(pattern.bpm_max, self.current_song.bpm),
+            )
+            self.load_pattern_for_section(pattern, bpm)
+            self.transport.set_bpm(bpm)
+            self.metronome.set_bpm(bpm)
+            self.timeline.set_bpm(bpm)
+            self.transport.select_pattern(pattern_id)
 
-            # Update transport controls
-            self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
-            self.transport.set_bpm(self.current_song.bpm)
-
-            # Configure metronome
-            beats_per_bar = pattern.time_sig[0]
-            self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
-            self.metronome.set_bpm(self.current_song.bpm)
-
-    def load_pattern_for_section(self, pattern, section):
-        """Load a pattern configured for a specific section."""
-        # Create a virtual pattern with section-specific chord progression
-        # For now, just use the base pattern
+    def load_pattern_for_section(self, pattern, bpm):
+        """Load a pattern configured with a specific BPM."""
         self.timeline.set_pattern(pattern)
-        bpm = section.bpm_override or self.current_song.bpm
         self.timeline.set_bpm(bpm)
         self.steps_preview.set_pattern(pattern)
 
@@ -348,6 +350,7 @@ class SongView(QWidget):
     def set_patterns(self, patterns):
         """Set available patterns."""
         self.patterns = patterns
+        self.transport.set_patterns(patterns)
 
     def set_songs(self, songs):
         """Set available songs."""
@@ -439,6 +442,22 @@ class SongView(QWidget):
         self.metronome.set_bpm(bpm)
         self.timeline.set_bpm(bpm)
 
+    def on_pattern_changed(self, pattern_id: str):
+        """Handle pattern selection change from transport controls."""
+        if pattern_id not in self.patterns:
+            return
+        self.override_pattern_id = pattern_id
+        pattern = self.patterns[pattern_id]
+        # Clamp BPM to pattern range while preserving current tempo if possible
+        bpm = max(
+            pattern.bpm_min,
+            min(pattern.bpm_max, self.transport.current_bpm),
+        )
+        self.load_pattern_for_section(pattern, bpm)
+        self.transport.set_bpm(bpm)
+        self.metronome.set_bpm(bpm)
+        self.timeline.set_bpm(bpm)
+
     def on_volume_changed(self, volume_type: str, value: float):
         """Handle volume changes from transport controls."""
         if volume_type == "master":
@@ -467,7 +486,9 @@ class SongView(QWidget):
         # Handle auto-advance between sections
         if self.auto_advance.isChecked() and self.current_section:
             # Calculate if we've completed this section
-            pattern = self.patterns.get(self.current_section.pattern)
+            pattern = self.patterns.get(
+                self.override_pattern_id or self.current_section.pattern
+            )
             if pattern:
                 steps_per_bar = pattern.steps_per_bar
                 completed_bars = step_index // steps_per_bar
@@ -486,7 +507,9 @@ class SongView(QWidget):
             return
 
         # Get pattern to calculate bars
-        pattern = self.patterns.get(self.current_section.pattern)
+        pattern = self.patterns.get(
+            self.override_pattern_id or self.current_section.pattern
+        )
         if not pattern:
             return
 
@@ -502,8 +525,10 @@ class SongView(QWidget):
         if not self.current_song:
             return
 
-        # Get current pattern (from section or main song)
-        if self.current_section:
+        # Get current pattern (override, section or main song)
+        if self.override_pattern_id:
+            pattern_id = self.override_pattern_id
+        elif self.current_section:
             pattern_id = self.current_section.pattern
         else:
             pattern_id = self.current_song.pattern_id
