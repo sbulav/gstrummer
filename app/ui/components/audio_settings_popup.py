@@ -1,21 +1,31 @@
-from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-                               QSlider, QPushButton, QCheckBox, QGroupBox,
-                               QDialogButtonBox)
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSlider,
+    QVBoxLayout,
+)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
 
 class AudioSettingsPopup(QDialog):
     """Popup window with detailed audio settings controls."""
-    
+
     # Signals for audio state changes
     volume_changed = Signal(str, float)  # volume_type, value
     enabled_changed = Signal(str, bool)  # audio_type, enabled
-    mute_toggled = Signal(str, bool)     # volume_type, muted
-    
+    mute_toggled = Signal(str, bool)  # volume_type, muted
+    instrument_changed = Signal(str)  # instrument name
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         # Audio state
         self._master_volume = 0.8
         self._master_muted = False
@@ -25,230 +35,271 @@ class AudioSettingsPopup(QDialog):
         self._strum_volume = 0.5
         self._strum_muted = False
         self._strum_enabled = True
-        
+
+        self._instrument = "guitar"
+        self._available_instruments: list[str] = ["guitar"]
+
         self.init_ui()
         self.setup_connections()
-        
+
     def init_ui(self):
         """Initialize the popup dialog UI."""
         self.setWindowTitle("Audio Settings - GStrummer")
         self.setModal(True)
-        self.setFixedSize(450, 350)
-        
+        # Allow the dialog to size itself to the contents. The previous fixed
+        # height was too small which collapsed inner widgets making them
+        # unusable on some platforms.
+        self.setMinimumWidth(450)
+
         # Main layout
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
-        
+
         # Title
         title = QLabel("🔊 Audio Settings")
         title.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
         layout.addWidget(title)
-        
+
         # Master volume section
         master_group = self._create_master_volume_section()
         layout.addWidget(master_group)
-        
-        # Metronome section  
+
+        # Metronome section
         click_group = self._create_click_volume_section()
         layout.addWidget(click_group)
-        
+
         # Strum sounds section
         strum_group = self._create_strum_volume_section()
         layout.addWidget(strum_group)
-        
+
+        # Sound generation section
+        instrument_group = self._create_instrument_section()
+        layout.addWidget(instrument_group)
+
         # Button box
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(self.close)
         layout.addWidget(button_box)
-        
-        # Apply styling
+
+        # Apply styling and finalise size once all widgets are in place
         self.setStyleSheet(self._get_dialog_stylesheet())
-        
+        self.adjustSize()
+
     def _create_master_volume_section(self):
         """Create master volume controls section."""
         group = QGroupBox("🔊 Master Volume")
         layout = QVBoxLayout(group)
-        
+
         # Volume control row
         volume_layout = QHBoxLayout()
-        
+
         self.master_slider = QSlider(Qt.Orientation.Horizontal)
         self.master_slider.setRange(0, 100)
         self.master_slider.setValue(int(self._master_volume * 100))
         volume_layout.addWidget(self.master_slider)
-        
+
         self.master_label = QLabel(f"{int(self._master_volume * 100)}%")
         self.master_label.setMinimumWidth(40)
         self.master_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         volume_layout.addWidget(self.master_label)
-        
+
         self.master_mute_btn = QPushButton("🔊")
         self.master_mute_btn.setCheckable(True)
         self.master_mute_btn.setMaximumWidth(50)
         volume_layout.addWidget(self.master_mute_btn)
-        
+
         layout.addLayout(volume_layout)
-        
+
         return group
-        
+
     def _create_click_volume_section(self):
         """Create metronome volume controls section."""
         group = QGroupBox("🎵 Metronome")
         layout = QVBoxLayout(group)
-        
+
         # Enable checkbox
         self.click_enable_cb = QCheckBox("Enable metronome sounds")
         self.click_enable_cb.setChecked(self._click_enabled)
         layout.addWidget(self.click_enable_cb)
-        
+
         # Volume control row
         volume_layout = QHBoxLayout()
-        
+
         self.click_slider = QSlider(Qt.Orientation.Horizontal)
         self.click_slider.setRange(0, 100)
         self.click_slider.setValue(int(self._click_volume * 100))
         volume_layout.addWidget(self.click_slider)
-        
+
         self.click_label = QLabel(f"{int(self._click_volume * 100)}%")
         self.click_label.setMinimumWidth(40)
         self.click_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         volume_layout.addWidget(self.click_label)
-        
+
         self.click_mute_btn = QPushButton("🎵")
         self.click_mute_btn.setCheckable(True)
         self.click_mute_btn.setMaximumWidth(50)
         volume_layout.addWidget(self.click_mute_btn)
-        
+
         layout.addLayout(volume_layout)
-        
+
         return group
-        
+
     def _create_strum_volume_section(self):
         """Create strum sounds volume controls section."""
         group = QGroupBox("🎸 Strum Sounds")
         layout = QVBoxLayout(group)
-        
+
         # Enable checkbox
         self.strum_enable_cb = QCheckBox("Enable strum sounds")
         self.strum_enable_cb.setChecked(self._strum_enabled)
         layout.addWidget(self.strum_enable_cb)
-        
+
         # Volume control row
         volume_layout = QHBoxLayout()
-        
+
         self.strum_slider = QSlider(Qt.Orientation.Horizontal)
         self.strum_slider.setRange(0, 100)
         self.strum_slider.setValue(int(self._strum_volume * 100))
         volume_layout.addWidget(self.strum_slider)
-        
+
         self.strum_label = QLabel(f"{int(self._strum_volume * 100)}%")
         self.strum_label.setMinimumWidth(40)
         self.strum_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         volume_layout.addWidget(self.strum_label)
-        
+
         self.strum_mute_btn = QPushButton("🎸")
         self.strum_mute_btn.setCheckable(True)
         self.strum_mute_btn.setMaximumWidth(50)
         volume_layout.addWidget(self.strum_mute_btn)
-        
+
         layout.addLayout(volume_layout)
-        
+
         return group
-        
+
+    def _create_instrument_section(self):
+        """Create instrument selection section."""
+        group = QGroupBox("🎼 Sound Generation")
+        layout = QHBoxLayout(group)
+
+        self.instrument_combo = QComboBox()
+        layout.addWidget(self.instrument_combo)
+
+        return group
+
     def setup_connections(self):
         """Setup signal connections for all controls."""
         # Master volume connections
         self.master_slider.valueChanged.connect(self._on_master_volume_changed)
         self.master_mute_btn.toggled.connect(self._on_master_mute_toggled)
-        
+
         # Click volume connections
         self.click_enable_cb.toggled.connect(self._on_click_enabled_changed)
         self.click_slider.valueChanged.connect(self._on_click_volume_changed)
         self.click_mute_btn.toggled.connect(self._on_click_mute_toggled)
-        
+
         # Strum volume connections
         self.strum_enable_cb.toggled.connect(self._on_strum_enabled_changed)
         self.strum_slider.valueChanged.connect(self._on_strum_volume_changed)
         self.strum_mute_btn.toggled.connect(self._on_strum_mute_toggled)
-        
+
+        # Instrument selection
+        self.instrument_combo.currentTextChanged.connect(self._on_instrument_changed)
+
     def _on_master_volume_changed(self, value: int):
         """Handle master volume slider change."""
         self._master_volume = value / 100.0
         self.master_label.setText(f"{value}%")
-        
+
         # Only emit if not muted
         if not self._master_muted:
-            self.volume_changed.emit('master', self._master_volume)
-        
+            self.volume_changed.emit("master", self._master_volume)
+
     def _on_master_mute_toggled(self, checked: bool):
         """Handle master mute button toggle."""
         self._master_muted = checked
         self.master_mute_btn.setText("🔇" if checked else "🔊")
-        self.mute_toggled.emit('master', checked)
-        
+        self.mute_toggled.emit("master", checked)
+
         # Emit volume with 0 if muted, normal volume if unmuted
         effective_volume = 0.0 if checked else self._master_volume
-        self.volume_changed.emit('master', effective_volume)
-        
+        self.volume_changed.emit("master", effective_volume)
+
     def _on_click_enabled_changed(self, checked: bool):
         """Handle click enable checkbox change."""
         self._click_enabled = checked
         # Enable/disable click volume controls
         self.click_slider.setEnabled(checked)
         self.click_mute_btn.setEnabled(checked)
-        self.enabled_changed.emit('click', checked)
-        
+        self.enabled_changed.emit("click", checked)
+
     def _on_click_volume_changed(self, value: int):
         """Handle click volume slider change."""
         self._click_volume = value / 100.0
         self.click_label.setText(f"{value}%")
-        
+
         # Only emit if enabled and not muted
         if self._click_enabled and not self._click_muted:
-            self.volume_changed.emit('click', self._click_volume)
-        
+            self.volume_changed.emit("click", self._click_volume)
+
     def _on_click_mute_toggled(self, checked: bool):
         """Handle click mute button toggle."""
         self._click_muted = checked
         self.click_mute_btn.setText("🔇" if checked else "🎵")
-        self.mute_toggled.emit('click', checked)
-        
+        self.mute_toggled.emit("click", checked)
+
         # Emit volume with 0 if muted, normal volume if unmuted
         if self._click_enabled:
             effective_volume = 0.0 if checked else self._click_volume
-            self.volume_changed.emit('click', effective_volume)
-        
+            self.volume_changed.emit("click", effective_volume)
+
     def _on_strum_enabled_changed(self, checked: bool):
         """Handle strum enable checkbox change."""
         self._strum_enabled = checked
         # Enable/disable strum volume controls
         self.strum_slider.setEnabled(checked)
         self.strum_mute_btn.setEnabled(checked)
-        self.enabled_changed.emit('strum', checked)
-        
+        self.enabled_changed.emit("strum", checked)
+
     def _on_strum_volume_changed(self, value: int):
         """Handle strum volume slider change."""
         self._strum_volume = value / 100.0
         self.strum_label.setText(f"{value}%")
-        
+
         # Only emit if enabled and not muted
         if self._strum_enabled and not self._strum_muted:
-            self.volume_changed.emit('strum', self._strum_volume)
-        
+            self.volume_changed.emit("strum", self._strum_volume)
+
     def _on_strum_mute_toggled(self, checked: bool):
         """Handle strum mute button toggle."""
         self._strum_muted = checked
         self.strum_mute_btn.setText("🔇" if checked else "🎸")
-        self.mute_toggled.emit('strum', checked)
-        
+        self.mute_toggled.emit("strum", checked)
+
         # Emit volume with 0 if muted, normal volume if unmuted
         if self._strum_enabled:
             effective_volume = 0.0 if checked else self._strum_volume
-            self.volume_changed.emit('strum', effective_volume)
-        
+            self.volume_changed.emit("strum", effective_volume)
+
+    def _on_instrument_changed(self, text: str):
+        """Handle instrument combo change."""
+        self._instrument = text
+        self.instrument_changed.emit(text)
+
+    # Public setters for external updates
+    def set_instrument(self, instrument: str, available: list[str]):
+        """Update available instruments and current selection."""
+        self._available_instruments = available
+        self.instrument_combo.clear()
+        for name in available:
+            self.instrument_combo.addItem(name)
+        idx = self.instrument_combo.findText(instrument)
+        if idx >= 0:
+            self.instrument_combo.setCurrentIndex(idx)
+        self._instrument = instrument
+
     def _get_dialog_stylesheet(self):
         """Get stylesheet for the dialog."""
         return """
@@ -348,24 +399,24 @@ class AudioSettingsPopup(QDialog):
             color: #2c3e50;
         }
         """
-        
+
     # Public methods for setting values from parent
     def set_master_volume(self, volume: float, muted: bool):
         """Set master volume values."""
         self._master_volume = volume
         self._master_muted = muted
-        
+
         self.master_slider.setValue(int(volume * 100))
         self.master_label.setText(f"{int(volume * 100)}%")
         self.master_mute_btn.setChecked(muted)
         self.master_mute_btn.setText("🔇" if muted else "🔊")
-        
+
     def set_click_volume(self, volume: float, muted: bool, enabled: bool):
         """Set click volume values."""
         self._click_volume = volume
-        self._click_muted = muted  
+        self._click_muted = muted
         self._click_enabled = enabled
-        
+
         self.click_slider.setValue(int(volume * 100))
         self.click_slider.setEnabled(enabled)
         self.click_label.setText(f"{int(volume * 100)}%")
@@ -373,13 +424,13 @@ class AudioSettingsPopup(QDialog):
         self.click_mute_btn.setText("🔇" if muted else "🎵")
         self.click_mute_btn.setEnabled(enabled)
         self.click_enable_cb.setChecked(enabled)
-        
+
     def set_strum_volume(self, volume: float, muted: bool, enabled: bool):
         """Set strum volume values."""
         self._strum_volume = volume
         self._strum_muted = muted
         self._strum_enabled = enabled
-        
+
         self.strum_slider.setValue(int(volume * 100))
         self.strum_slider.setEnabled(enabled)
         self.strum_label.setText(f"{int(volume * 100)}%")

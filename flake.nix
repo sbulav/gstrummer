@@ -25,6 +25,7 @@
           numba
           sounddevice
           soundfile # pysoundfile (libsndfile backend)
+          pyfluidsynth
           audioread
           librosa
           pyyaml

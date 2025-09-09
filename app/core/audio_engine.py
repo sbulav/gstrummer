@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from .chord_synth import generate_chord
+from .chord_synth import generate_chord, render_soundfont_chord
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,10 @@ class AudioEngine:
         self._buffer_size = 1024
         self._enabled = True
 
+        # Optional UI error callback for display in GUI
+        self._error_callback = None
+
+
         # Volume controls (0.0 to 1.0)
         self._click_volume = 0.7
         self._strum_volume = 0.5
@@ -41,6 +45,14 @@ class AudioEngine:
         # Enable/disable controls for different audio types
         self._click_enabled = True
         self._strum_enabled = True
+
+        # Default instrument for generated chords
+        self._chord_instrument = "guitar"
+
+        # Default SoundFont path (can be customized by user)
+        self._soundfont_path = str(
+            Path(__file__).parent.parent.parent / "assets" / "soundfonts" / "acoustic_guitar.sf2"
+        )
 
         # Sample cache - keeping the original format for backward compatibility but also supporting tuple format
         self._samples: Dict[str, np.ndarray] = {}
@@ -353,7 +365,7 @@ class AudioEngine:
         accent: float = 0.0,
         technique: str = "open",
         chord: Optional[str] = None,
-        instrument: str = "guitar",
+        instrument: Optional[str] = None,
     ) -> None:
         """Play strum sound or generated chord based on direction."""
         if direction == "-":
@@ -362,7 +374,10 @@ class AudioEngine:
         if chord:
             # Currently technique does not affect generated chords
             self.play_chord(
-                chord, direction=direction, accent=accent, instrument=instrument
+                chord,
+                direction=direction,
+                accent=accent,
+                instrument=instrument,
             )
             return
 
@@ -398,29 +413,66 @@ class AudioEngine:
         chord: str,
         direction: str = "D",
         accent: float = 0.0,
-        instrument: str = "guitar",
+        instrument: Optional[str] = None,
         duration: float = 1.0,
     ) -> None:
         """Generate and play a chord for songs mode."""
         if not self._strum_enabled:
             return
 
+        chosen_instrument = instrument or self._chord_instrument
+        soundfont_path = self._soundfont_path if chosen_instrument == "sf2_guitar" else None
+
+        logger.debug("Playing chord %s with instrument %s (soundfont: %s)", 
+                   chord, chosen_instrument, "Yes" if soundfont_path else "No")
+
         try:
             data = generate_chord(
                 chord,
-                instrument=instrument,
+                instrument=chosen_instrument,
                 direction=direction,
                 duration=duration,
                 sample_rate=self._sample_rate,
+                soundfont_path=soundfont_path
             )
         except Exception as exc:
             logger.warning("Failed to generate chord %s: %s", chord, exc)
+            if self._error_callback is not None:
+                self._error_callback(f"Failed to generate chord '{chord}': {exc}")
             return
 
         base_volume = self._strum_volume
         accent_boost = accent * 0.3
         volume = base_volume * (1.0 + accent_boost)
         self._play_data(data, volume)
+
+    def set_chord_instrument(self, instrument: str) -> None:
+        """Set default instrument for generated chords."""
+        logger.debug("Setting chord instrument to: %s", instrument)
+        self._chord_instrument = instrument
+
+    def get_chord_instrument(self) -> str:
+        """Get current default chord instrument."""
+        return self._chord_instrument
+
+    def get_soundfont_path(self) -> str:
+        """Get the path to the current SoundFont file."""
+        return self._soundfont_path
+
+    def set_soundfont_path(self, path: str) -> None:
+        """Set the path to the SoundFont (.sf2) file used for sf2_guitar."""
+        self._soundfont_path = path
+
+    def set_error_callback(self, cb):
+        """Set a callback (callable) to be invoked on chord/audio errors."""
+        self._error_callback = cb
+
+    def get_available_instruments(self) -> List[str]:
+        """Return list of available chord instruments."""
+        instruments = ["guitar"]
+        if render_soundfont_chord is not None:
+            instruments.append("sf2_guitar")
+        return instruments
 
     def set_volumes(
         self,

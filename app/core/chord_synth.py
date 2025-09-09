@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import numpy as np
 
 from .chord_library import get_chord_diagram
+
+try:
+    from .soundfont_synth import render_chord as render_soundfont_chord
+except Exception:  # pragma: no cover - optional dependency
+    render_soundfont_chord = None  # type: ignore[assignment]
 
 # Standard tuning for guitar (E2, A2, D3, G3, B3, E4)
 STANDARD_TUNING = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63]
@@ -29,7 +35,9 @@ def generate_chord(
     direction: str = "D",
     duration: float = 1.0,
     sample_rate: int = 44100,
+    soundfont_path: str | None = None,
 ) -> np.ndarray:
+    logger = logging.getLogger(__name__)
     """Generate a chord waveform.
 
     Parameters
@@ -37,7 +45,7 @@ def generate_chord(
     chord_name:
         Name of the chord (e.g., "Am", "C").
     instrument:
-        Either ``"guitar"`` or ``"piano"``.
+        ``"guitar"``, ``"piano"`` or ``"sf2_guitar"``.
     direction:
         Strum direction, ``"D"`` or ``"U"``. Used for guitar to stagger note
         start times.
@@ -46,6 +54,22 @@ def generate_chord(
     sample_rate:
         Sampling rate of the generated waveform.
     """
+
+    if instrument == "sf2_guitar":
+        if render_soundfont_chord is None:
+            raise RuntimeError("SoundFont backend not available")
+        
+        logger = logging.getLogger(__name__)
+        logger.debug("Using SoundFont synthesis for chord %s with soundfont: %s", 
+                   chord_name, soundfont_path)
+        
+        return render_soundfont_chord(
+            chord_name,
+            direction=direction,
+            duration=duration,
+            sample_rate=sample_rate,
+            soundfont_path=soundfont_path,
+        ).astype(np.float32)
 
     freqs = _frequencies_from_chord(chord_name)
     if not freqs:
@@ -62,6 +86,7 @@ def generate_chord(
             ) * envelope
             output[: wave.size] += wave
     else:  # guitar
+        logger.debug("Using built-in guitar synthesis for chord %s", chord_name)
         strum_delay = 0.01  # seconds between strings
         indices = list(range(len(freqs)))
         if direction.upper() == "U":
