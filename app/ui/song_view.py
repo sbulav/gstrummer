@@ -14,7 +14,6 @@ from PySide6.QtGui import QFont, QKeySequence, QShortcut
 
 from .components.timeline import TimelineWidget
 from .components.transport import TransportControls
-from .components.steps_preview import StepsPreviewWidget
 from .components.progression_controls import ProgressionControlsWidget
 from .components.chord_display import ChordDisplayWidget
 from .components.song_info_popup import SongInfoPopup
@@ -141,23 +140,12 @@ class SongView(QWidget):
         controls_line.addWidget(self.grid_checkbox)
         timeline_layout.addLayout(controls_line)
 
-        # Horizontal splitter for timeline and preview
-        timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
-
-        # Timeline widget (left side)
+        # Timeline widget (full width)
         self.timeline = TimelineWidget()
-        timeline_splitter.addWidget(self.timeline)
+        self.timeline.steps_per_bar = 16
+        self.timeline.update_geometry()
         self.timeline.set_show_grid(self.grid_checkbox.isChecked())
-
-        # Steps preview (right side)
-        self.steps_preview = StepsPreviewWidget()
-        timeline_splitter.addWidget(self.steps_preview)
-
-        # Set proportions: timeline gets 70%, preview gets 30%
-        timeline_splitter.setStretchFactor(0, 7)
-        timeline_splitter.setStretchFactor(1, 3)
-
-        timeline_layout.addWidget(timeline_splitter)
+        timeline_layout.addWidget(self.timeline)
 
         splitter.addWidget(timeline_group)
 
@@ -337,8 +325,9 @@ class SongView(QWidget):
     def load_pattern_for_section(self, pattern, bpm):
         """Load a pattern configured with a specific BPM."""
         self.timeline.set_pattern(pattern)
+        self.timeline.steps_per_bar = 16
+        self.timeline.update_geometry()
         self.timeline.set_bpm(bpm)
-        self.steps_preview.set_pattern(pattern)
 
         # Update transport controls
         self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
@@ -435,7 +424,6 @@ class SongView(QWidget):
         """Stop practice session."""
         self.metronome.stop()
         self.timeline.set_current_step(0)
-        self.steps_preview.set_current_step(0)
 
     def on_bpm_changed(self, bpm: int):
         """Handle BPM change from transport controls."""
@@ -478,7 +466,6 @@ class SongView(QWidget):
         """Handle metronome tick for GUI updates."""
         # Update timeline visualization
         self.timeline.set_current_step(step_index)
-        self.steps_preview.set_current_step(step_index)
 
         # Update chord progression highlighting
         self._update_chord_highlighting(step_index)
