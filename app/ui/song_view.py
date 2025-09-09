@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QGroupBox,
-    QTextEdit,
     QSplitter,
     QCheckBox,
     QComboBox,
@@ -53,7 +52,7 @@ class SongView(QWidget):
         header_layout.addWidget(self.back_button)
 
         header_layout.addStretch()
-        
+
         # Song selector
         header_layout.addWidget(QLabel("Песня:"))
         self.song_combo = QComboBox()
@@ -89,7 +88,7 @@ class SongView(QWidget):
 
         structure_layout.addLayout(section_layout)
 
-        # Chord progression section with two panes
+        # Chord section with two panes
         chord_section_layout = QHBoxLayout()
 
         # Left pane: progression controls
@@ -101,7 +100,7 @@ class SongView(QWidget):
         chord_section_layout.addWidget(progression_group)
 
         # Right pane: chord display
-        chords_group = QGroupBox("Прогрессия аккордов")
+        chords_group = QGroupBox("Аккорды")
         chords_group_layout = QVBoxLayout(chords_group)
         self.chord_display = ChordDisplayWidget()
         chords_group_layout.addWidget(self.chord_display)
@@ -172,7 +171,7 @@ class SongView(QWidget):
 
         # Set splitter proportions (rhythm visualization gets most space like in practice view)
         splitter.setStretchFactor(0, 1)  # Structure
-        splitter.setStretchFactor(1, 3)  # Rhythm visualization gets 3x more space 
+        splitter.setStretchFactor(1, 3)  # Rhythm visualization gets 3x more space
         splitter.setStretchFactor(2, 1)  # Transport controls
 
         layout.addWidget(splitter)
@@ -349,21 +348,21 @@ class SongView(QWidget):
     def set_patterns(self, patterns):
         """Set available patterns."""
         self.patterns = patterns
-        
+
     def set_songs(self, songs):
         """Set available songs."""
         self.songs = songs
         self.populate_song_combo()
-        
+
     def populate_song_combo(self):
         """Populate the song selection combo box."""
         self.song_combo.clear()
         self.song_combo.addItem("Выберите песню...", None)
-        
+
         for song in self.songs:
             display_name = f"{song.artist} - {song.title}"
             self.song_combo.addItem(display_name, song)
-            
+
     def on_song_changed(self, song_text: str):
         """Handle song selection change."""
         song = self.song_combo.currentData()
@@ -374,10 +373,10 @@ class SongView(QWidget):
         """Show the song information popup dialog."""
         if not self.current_song:
             return
-            
+
         if not self.song_info_popup:
             self.song_info_popup = SongInfoPopup(self)
-            
+
         self.song_info_popup.set_song(self.current_song)
         self.song_info_popup.exec()
 
@@ -480,21 +479,21 @@ class SongView(QWidget):
                 ):
                     # Auto-advance to next section
                     self.next_section()
-                    
+
     def _update_chord_highlighting(self, step_index: int):
         """Update chord highlighting based on current step."""
         if not self.current_section:
             return
-            
+
         # Get pattern to calculate bars
         pattern = self.patterns.get(self.current_section.pattern)
         if not pattern:
             return
-            
+
         # Calculate current bar and chord index
         steps_per_bar = pattern.steps_per_bar
         current_bar = (step_index // steps_per_bar) % len(self.current_section.chords)
-        
+
         # Highlight current chord
         self.chord_display.highlight_chord(current_bar)
 
