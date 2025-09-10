@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QCheckBox,
     QComboBox,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence, QShortcut
@@ -142,8 +143,7 @@ class SongView(QWidget):
 
         # Timeline widget (full width)
         self.timeline = TimelineWidget()
-        self.timeline.steps_per_bar = 16
-        self.timeline.update_geometry()
+        # steps_per_bar will be set from the selected pattern (see load_pattern_for_section)
         self.timeline.set_show_grid(self.grid_checkbox.isChecked())
         timeline_layout.addWidget(self.timeline)
 
@@ -332,16 +332,48 @@ class SongView(QWidget):
     def load_pattern_for_section(self, pattern, bpm):
         """Load a pattern configured with a specific BPM."""
         self.timeline.set_pattern(pattern)
-        self.timeline.steps_per_bar = 16
+        # Drive the timeline resolution from the pattern
+        self.timeline.steps_per_bar = pattern.steps_per_bar
         self.timeline.update_geometry()
         self.timeline.set_bpm(bpm)
 
         # Update transport controls
         self.transport.set_bpm_range(pattern.bpm_min, pattern.bpm_max)
 
-        # Configure metronome
+        # Validate and configure metronome subdivision
         beats_per_bar = pattern.time_sig[0]
-        self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
+        if beats_per_bar <= 0:
+            raise ValueError("Invalid time signature: beats_per_bar must be > 0")
+
+        # Expect steps_per_bar to be divisible by beats_per_bar for stable beat clicks.
+        if pattern.steps_per_bar % beats_per_bar != 0:
+            # Soft fallback: 1 step per beat to avoid misalignment in unusual meters.
+            self.metronome.steps_per_beat = 1
+        else:
+            self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
+
+        # Optional sanity check for authoring mistakes (missing rests)
+        if hasattr(pattern, "steps") and len(pattern.steps) != pattern.steps_per_bar:
+            try:
+                QMessageBox.warning(
+                    self,
+                    "Pattern warning",
+                    f"Pattern '{getattr(pattern, 'name', pattern)}': "
+                    f"len(steps) ({len(pattern.steps)}) != steps_per_bar ({pattern.steps_per_bar}).\n"
+                    "This can cause timing drift on empty ticks. "
+                    "Consider adding '-' steps to match steps_per_bar.",
+                )
+            except Exception:
+                # headless / non-GUI environments
+                pass
+
+    def _bar_duration_seconds(self, pattern) -> float:
+        """Compute bar duration taking time-signature denominator into account."""
+        num, den = pattern.time_sig
+        if den <= 0:
+            raise ValueError("Invalid time signature: denominator must be > 0")
+        seconds_per_quarter = 60.0 / max(1, self.metronome.bpm)
+        return seconds_per_quarter * num * (4.0 / den)
 
     def set_patterns(self, patterns):
         """Set available patterns."""
@@ -564,13 +596,13 @@ class SongView(QWidget):
             # Compute timing for next step based on pattern t values
             next_step = pattern.steps[(bar_step + 1) % len(pattern.steps)]
             delta_t = (next_step.t - step.t) % 1.0
-            beats_per_bar = pattern.time_sig[0]
-            bar_duration = 60.0 / self.metronome.bpm * beats_per_bar
-            self.metronome.set_step_duration(delta_t * bar_duration)
+            # Use denominator-aware bar duration
+            bar_duration_sec = self._bar_duration_seconds(pattern)
+            self.metronome.set_step_duration(delta_t * bar_duration_sec)
 
             # Play metronome click with beat awareness
             beats_per_bar = pattern.time_sig[0]
-            steps_per_beat = bar_length // beats_per_bar
+            steps_per_beat = max(1, bar_length // max(1, beats_per_bar))
 
             if bar_step == 0:
                 # Strong beat (downbeat) - use high click

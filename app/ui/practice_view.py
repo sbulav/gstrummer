@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QSplitter,
     QCheckBox,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QKeySequence, QShortcut, QPainter, QPen, QBrush, QColor
@@ -76,7 +77,6 @@ class PracticeView(QWidget):
         controls_line.addWidget(self.grid_checkbox)
         timeline_layout.addLayout(controls_line)
 
-        # Horizontal splitter for timeline and preview
         # Horizontal splitter for timeline and preview
         self.timeline_splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -151,14 +151,6 @@ class PracticeView(QWidget):
         chord_layout = QVBoxLayout(chord_container)
         chord_layout.setContentsMargins(10, 5, 10, 5)
 
-        # # Song info label
-        # self.song_info_label = QLabel("Выберите ритм для отображения прогрессии")
-        # self.song_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.song_info_label.setStyleSheet("font-size: 11px; color: gray; margin-bottom: 5px;")
-        # chord_layout.addWidget(self.song_info_label)
-
-        # NOTE: No text above the chord container per requirement
-
         # Custom widget for chord progression display
         self.chord_display_widget = QWidget()
         self.chord_display_widget.setMinimumHeight(90)
@@ -226,6 +218,9 @@ class PracticeView(QWidget):
             self.pattern_title.setText(pattern.name)
             self.timeline.set_pattern(pattern)
             self.timeline.set_bpm(pattern.bpm_default)
+            # Drive the timeline resolution from the pattern
+            self.timeline.steps_per_bar = pattern.steps_per_bar
+            self.timeline.update_geometry()
             self.steps_preview.set_pattern(pattern)
 
             # Hide or show steps_preview pane for 16 steps
@@ -248,10 +243,32 @@ class PracticeView(QWidget):
             # Update chord progression
             self.update_chord_progression()
 
-            # Configure metronome for this pattern
+            # Configure metronome for this pattern (with validation)
             beats_per_bar = pattern.time_sig[0]
-            self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
+            if beats_per_bar <= 0:
+                raise ValueError("Invalid time signature: beats_per_bar must be > 0")
+            if pattern.steps_per_bar % beats_per_bar != 0:
+                self.metronome.steps_per_beat = 1  # safe fallback
+            else:
+                self.metronome.steps_per_beat = pattern.steps_per_bar // beats_per_bar
             self.metronome.set_bpm(pattern.bpm_default)
+
+            # Optional sanity check for authoring mistakes (missing rests)
+            if (
+                hasattr(pattern, "steps")
+                and len(pattern.steps) != pattern.steps_per_bar
+            ):
+                try:
+                    QMessageBox.warning(
+                        self,
+                        "Pattern warning",
+                        f"Pattern '{getattr(pattern, 'name', pattern)}': "
+                        f"len(steps) ({len(pattern.steps)}) != steps_per_bar ({pattern.steps_per_bar}).\n"
+                        "This can cause timing drift on empty ticks. "
+                        "Consider adding '-' steps to match steps_per_bar.",
+                    )
+                except Exception:
+                    pass  # headless / non-GUI
 
     def set_patterns(self, patterns):
         """Set available patterns for selection."""
@@ -404,6 +421,9 @@ class PracticeView(QWidget):
             self.pattern_title.setText(new_pattern.name)
             self.timeline.set_pattern(new_pattern)
             self.timeline.set_bpm(new_pattern.bpm_default)
+            # Drive the timeline resolution from the pattern
+            self.timeline.steps_per_bar = new_pattern.steps_per_bar
+            self.timeline.update_geometry()
             self.steps_preview.set_pattern(new_pattern)
 
             # Update chord progression display
@@ -425,10 +445,34 @@ class PracticeView(QWidget):
                     self.timeline_splitter.setStretchFactor(1, 3)
                 self.steps_preview.show()
 
-            # Configure metronome for the new pattern
+            # Configure metronome for the new pattern (with validation)
             beats_per_bar = new_pattern.time_sig[0]
-            self.metronome.steps_per_beat = new_pattern.steps_per_bar // beats_per_bar
+            if beats_per_bar <= 0:
+                raise ValueError("Invalid time signature: beats_per_bar must be > 0")
+            if new_pattern.steps_per_bar % beats_per_bar != 0:
+                self.metronome.steps_per_beat = 1
+            else:
+                self.metronome.steps_per_beat = (
+                    new_pattern.steps_per_bar // beats_per_bar
+                )
             self.metronome.set_bpm(new_pattern.bpm_default)
+
+            # Optional sanity check for authoring mistakes (missing rests)
+            if (
+                hasattr(new_pattern, "steps")
+                and len(new_pattern.steps) != new_pattern.steps_per_bar
+            ):
+                try:
+                    QMessageBox.warning(
+                        self,
+                        "Pattern warning",
+                        f"Pattern '{getattr(new_pattern, 'name', new_pattern)}': "
+                        f"len(steps) ({len(new_pattern.steps)}) != steps_per_bar ({new_pattern.steps_per_bar}).\n"
+                        "This can cause timing drift on empty ticks. "
+                        "Consider adding '-' steps to match steps_per_bar.",
+                    )
+                except Exception:
+                    pass  # headless / non-GUI
 
             # Reset timeline position when pattern changes
             self.timeline.set_current_step(0)
@@ -491,21 +535,24 @@ class PracticeView(QWidget):
                     else None
                 )
                 self.audio.play_strum(
-                    step.dir, step.accent, step.technique, chord=current_chord, instrument=self.audio.get_chord_instrument()
+                    step.dir,
+                    step.accent,
+                    step.technique,
+                    chord=current_chord,
+                    instrument=self.audio.get_chord_instrument(),
                 )
 
-            # Compute timing for next step
+            # Compute timing for next step (denominator-aware bar duration)
             next_step = self.current_pattern.steps[
                 (bar_step + 1) % len(self.current_pattern.steps)
             ]
             delta_t = (next_step.t - step.t) % 1.0
-            beats_per_bar = self.current_pattern.time_sig[0]
-            bar_duration = 60.0 / self.metronome.bpm * beats_per_bar
-            self.metronome.set_step_duration(delta_t * bar_duration)
+            bar_duration_sec = self._bar_duration_seconds(self.current_pattern)
+            self.metronome.set_step_duration(delta_t * bar_duration_sec)
 
             # Play metronome click with beat awareness
             beats_per_bar = self.current_pattern.time_sig[0]
-            steps_per_beat = bar_length // beats_per_bar
+            steps_per_beat = max(1, bar_length // max(1, beats_per_bar))
 
             if bar_step == 0:
                 # Strong beat (downbeat) - use high click
@@ -574,3 +621,11 @@ class PracticeView(QWidget):
         self.transport.set_bpm(bpm)
         self.metronome.set_bpm(bpm)
         self.timeline.set_bpm(bpm)
+
+    def _bar_duration_seconds(self, pattern) -> float:
+        """Compute bar duration taking time-signature denominator into account."""
+        num, den = pattern.time_sig
+        if den <= 0:
+            raise ValueError("Invalid time signature: denominator must be > 0")
+        seconds_per_quarter = 60.0 / max(1, self.metronome.bpm)
+        return seconds_per_quarter * num * (4.0 / den)

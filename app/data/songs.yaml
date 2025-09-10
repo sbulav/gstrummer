@@ -158,29 +158,29 @@
   bpm: 78
   time_sig: [4,4]
   pattern_id: "ddu_udu"
-  progression: ["Am", "G", "Em", "Am"]
+  progression: ["Hm", "A", "Em", "G"]
   structure:
     intro:
-      chords: ["Am"]
+      chords: ["Hm"]
       pattern: "ddu_udu"
       bars: 2
       repeat: 1
     verse:
-      chords: ["Am", "G", "Em", "Am"]
+      chords: ["Hm", "Hm", "A", "Em", "Hm"]
       pattern: "ddu_udu"
       bars: 4
-      repeat: 3
+      repeat: 2
     chorus:
-      chords: ["Am", "G", "Em", "Am"]
+      chords: ["A", "G", "Hm","Hm"]
       pattern: "ddu_udu"
       bars: 4
       repeat: 2
     outro:
-      chords: ["Am"]
+      chords: ["Hm"]
       pattern: "ddu_udu"
       bars: 2
       repeat: 1
-  all_chords: ["Am", "G", "Em"]
+  all_chords: ["Hm", "A", "Em", "G"]
   difficulty: "beginner"
   notes: |
     В оригинале чаще пальцами; медиаторный DDU UDU даёт мягкий балладный кач.
