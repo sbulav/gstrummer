@@ -1,3 +1,5 @@
+# soundfonts
+assets/soundfonts/**
 # Python bytecode and cache
 dist/
 build/
